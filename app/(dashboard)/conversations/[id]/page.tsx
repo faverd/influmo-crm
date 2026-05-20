@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import {
-  ArrowLeft, Bot, BotOff, Ban, CheckCheck, Check, Send, Flame, TrendingUp, Snowflake,
+  ArrowLeft, Bot, BotOff, Ban, CheckCheck, Check, Send, Sparkles, MessageSquarePlus,
 } from 'lucide-react'
 import Avatar from '@/components/avatar'
 import LeadBadge from '@/components/lead-badge'
@@ -29,6 +29,7 @@ export default function ConversationPage() {
   const [data, setData] = useState<ConversationData | null>(null)
   const [text, setText] = useState('')
   const [sending, setSending] = useState(false)
+  const [aiLoading, setAiLoading] = useState<'improve' | 'suggest' | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   async function load() {
@@ -61,6 +62,39 @@ export default function ConversationPage() {
       body: JSON.stringify({ bot_active: !data.contact.bot_active }),
     })
     await load()
+  }
+
+  async function improveText() {
+    if (!text.trim() || aiLoading) return
+    setAiLoading('improve')
+    try {
+      const res = await fetch('/api/ai/improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, mode: 'improve' }),
+      })
+      const d = await res.json()
+      if (d.text) setText(d.text)
+    } finally {
+      setAiLoading(null)
+    }
+  }
+
+  async function suggestReply() {
+    if (aiLoading || !data) return
+    setAiLoading('suggest')
+    try {
+      const context = data.messages.slice(-10).map(m => ({ role: m.role, content: m.content }))
+      const res = await fetch('/api/ai/improve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'suggest', context }),
+      })
+      const d = await res.json()
+      if (d.text) setText(d.text)
+    } finally {
+      setAiLoading(null)
+    }
   }
 
   async function toggleBlock() {
@@ -191,32 +225,56 @@ export default function ConversationPage() {
       </div>
 
       {/* Input */}
-      <div className="bg-white border-t border-gray-100 px-6 py-4 shrink-0">
+      <div className="bg-white border-t border-gray-100 px-6 py-3 shrink-0">
         {contact.blocked ? (
           <div className="text-center text-sm text-red-500 py-2">
             Contacto bloqueado — no se pueden enviar mensajes
           </div>
         ) : (
-          <form onSubmit={sendMessage} className="flex items-end gap-3">
-            <textarea
-              value={text}
-              onChange={e => setText(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(e as any) }
-              }}
-              placeholder="Escribí un mensaje manual..."
-              rows={1}
-              className="input flex-1 resize-none"
-              style={{ minHeight: 40, maxHeight: 120 }}
-            />
-            <button
-              type="submit"
-              disabled={!text.trim() || sending}
-              className="btn-primary h-10 px-4 disabled:opacity-50"
-            >
-              <Send size={16} />
-            </button>
-          </form>
+          <div className="flex flex-col gap-2">
+            {/* AI toolbar */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={suggestReply}
+                disabled={!!aiLoading}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-purple-50 text-purple-700 hover:bg-purple-100 transition-colors disabled:opacity-50"
+              >
+                <MessageSquarePlus size={12} />
+                {aiLoading === 'suggest' ? 'Generando...' : 'Sugerir respuesta'}
+              </button>
+              <button
+                type="button"
+                onClick={improveText}
+                disabled={!text.trim() || !!aiLoading}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-brand-light text-brand hover:bg-brand/20 transition-colors disabled:opacity-40"
+              >
+                <Sparkles size={12} />
+                {aiLoading === 'improve' ? 'Mejorando...' : 'Mejorar texto'}
+              </button>
+            </div>
+            {/* Text area + send */}
+            <form onSubmit={sendMessage} className="flex items-end gap-3">
+              <textarea
+                value={text}
+                onChange={e => setText(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(e as any) }
+                }}
+                placeholder="Escribí un mensaje manual..."
+                rows={1}
+                className="input flex-1 resize-none"
+                style={{ minHeight: 40, maxHeight: 120 }}
+              />
+              <button
+                type="submit"
+                disabled={!text.trim() || sending}
+                className="btn-primary h-10 px-4 disabled:opacity-50"
+              >
+                <Send size={16} />
+              </button>
+            </form>
+          </div>
         )}
       </div>
     </div>

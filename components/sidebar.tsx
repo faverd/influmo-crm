@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard, MessageSquare, Calendar, Kanban,
-  Settings, FlaskConical, Shield, LogOut, ChevronLeft, ChevronRight,
+  Settings, FlaskConical, Shield, LogOut, ChevronLeft, ChevronRight, Megaphone,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -15,6 +15,7 @@ const NAV = [
   { href: '/conversations', icon: MessageSquare,   label: 'Conversaciones' },
   { href: '/kanban',        icon: Kanban,          label: 'Kanban' },
   { href: '/calendar',      icon: Calendar,        label: 'Calendario' },
+  { href: '/broadcasts',    icon: Megaphone,       label: 'Difusión' },
   { href: '/test-chat',     icon: FlaskConical,    label: 'Test Chat' },
 ]
 
