@@ -1,19 +1,19 @@
 'use client'
 
 import { useState, Suspense } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useSearchParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight, UserPlus } from 'lucide-react'
 
 function LoginForm() {
+  const [tab, setTab] = useState<'login' | 'register'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirm, setConfirm] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [resetSent, setResetSent] = useState(false)
-  const [mode, setMode] = useState<'password' | 'reset'>('password')
+  const [success, setSuccess] = useState('')
   const searchParams = useSearchParams()
   const authError = searchParams.get('error')
   const router = useRouter()
@@ -32,19 +32,33 @@ function LoginForm() {
     setLoading(false)
   }
 
-  async function handleReset(e: React.FormEvent) {
+  async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
+    if (password !== confirm) { setError('Las contraseñas no coinciden'); return }
+    if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return }
     setLoading(true)
     setError('')
     const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/api/auth/callback`,
-    })
+    const { error, data } = await supabase.auth.signUp({ email, password })
     if (error) {
       setError(error.message)
+    } else if (data.session) {
+      router.push('/dashboard')
     } else {
-      setResetSent(true)
+      setSuccess('Cuenta creada. Revisá tu email para confirmarla, o pedile al admin que desactive la verificación en Supabase.')
     }
+    setLoading(false)
+  }
+
+  async function handleForgot() {
+    if (!email) { setError('Ingresá tu email primero'); return }
+    setLoading(true)
+    setError('')
+    const supabase = createClient()
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/api/auth/callback`,
+    })
+    setSuccess('Si el email existe, recibirás un link para restablecer tu contraseña.')
     setLoading(false)
   }
 
@@ -61,123 +75,151 @@ function LoginForm() {
         </div>
 
         <div className="card">
-          {resetSent ? (
-            <div className="text-center py-4">
-              <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail size={24} className="text-green-500" />
-              </div>
-              <h2 className="font-semibold text-gray-900 mb-2">Revisá tu email</h2>
-              <p className="text-sm text-gray-500 mb-4">
-                Te enviamos un link para restablecer tu contraseña a <strong>{email}</strong>.
-              </p>
-              <button
-                onClick={() => { setResetSent(false); setMode('password') }}
-                className="text-sm text-brand font-medium hover:underline"
-              >
-                Volver al login
-              </button>
+          {/* Tabs */}
+          <div className="flex rounded-xl bg-gray-100 p-1 mb-5">
+            <button
+              onClick={() => { setTab('login'); setError(''); setSuccess('') }}
+              className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                tab === 'login' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+              }`}
+            >
+              Iniciar sesión
+            </button>
+            <button
+              onClick={() => { setTab('register'); setError(''); setSuccess('') }}
+              className={`flex-1 py-1.5 text-sm font-medium rounded-lg transition-all ${
+                tab === 'register' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500'
+              }`}
+            >
+              Crear cuenta
+            </button>
+          </div>
+
+          {authError && (
+            <div className="bg-red-50 text-red-600 text-sm rounded-[10px] px-4 py-3 mb-4">
+              Error de autenticación. Intentá de nuevo.
             </div>
-          ) : mode === 'reset' ? (
-            <>
-              <h2 className="font-semibold text-gray-900 mb-1">Restablecer contraseña</h2>
-              <p className="text-sm text-gray-500 mb-5">Te enviamos un link a tu email</p>
+          )}
 
-              {authError && (
-                <div className="bg-red-50 text-red-600 text-sm rounded-[10px] px-4 py-3 mb-4">
-                  Error de autenticación. Intentá de nuevo.
+          {success ? (
+            <div className="bg-green-50 text-green-700 text-sm rounded-[10px] px-4 py-3 mb-4">
+              {success}
+            </div>
+          ) : null}
+
+          {tab === 'login' ? (
+            <form onSubmit={handleLogin} className="flex flex-col gap-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Email</label>
+                <div className="relative">
+                  <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    className="input pl-9"
+                    placeholder="vos@tudominio.com"
+                    required
+                    autoComplete="email"
+                  />
                 </div>
-              )}
-
-              <form onSubmit={handleReset} className="flex flex-col gap-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Email</label>
-                  <div className="relative">
-                    <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      className="input pl-9"
-                      placeholder="vos@tudominio.com"
-                      required
-                    />
-                  </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Contraseña</label>
+                <div className="relative">
+                  <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="input pl-9 pr-10"
+                    placeholder="••••••••"
+                    required
+                    autoComplete="current-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
                 </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <button type="submit" disabled={loading} className="btn-primary justify-center mt-1">
-                  {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-                  Enviar link de recuperación
-                </button>
-              </form>
-
-              <button
-                onClick={() => setMode('password')}
-                className="text-sm text-gray-400 hover:text-gray-600 mt-4 block text-center w-full"
-              >
-                ← Volver al login
+              </div>
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              <button type="submit" disabled={loading} className="btn-primary justify-center mt-1">
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                Ingresar
               </button>
-            </>
-          ) : (
-            <>
-              <h2 className="font-semibold text-gray-900 mb-1">Iniciar sesión</h2>
-              <p className="text-sm text-gray-500 mb-5">Ingresá con tu email y contraseña</p>
-
-              {authError && (
-                <div className="bg-red-50 text-red-600 text-sm rounded-[10px] px-4 py-3 mb-4">
-                  Error de autenticación. Intentá de nuevo.
-                </div>
-              )}
-
-              <form onSubmit={handleLogin} className="flex flex-col gap-3">
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Email</label>
-                  <div className="relative">
-                    <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="email"
-                      value={email}
-                      onChange={e => setEmail(e.target.value)}
-                      className="input pl-9"
-                      placeholder="vos@tudominio.com"
-                      required
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Contraseña</label>
-                  <div className="relative">
-                    <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type={showPass ? 'text' : 'password'}
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                      className="input pl-9 pr-10"
-                      placeholder="••••••••"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPass(v => !v)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                    >
-                      {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
-                    </button>
-                  </div>
-                </div>
-                {error && <p className="text-sm text-red-500">{error}</p>}
-                <button type="submit" disabled={loading} className="btn-primary justify-center mt-1">
-                  {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-                  Ingresar
-                </button>
-              </form>
-
               <button
-                onClick={() => setMode('reset')}
-                className="text-sm text-brand hover:underline mt-4 block text-center w-full"
+                type="button"
+                onClick={handleForgot}
+                disabled={loading}
+                className="text-xs text-gray-400 hover:text-brand transition-colors text-center mt-1"
               >
                 Olvidé mi contraseña
               </button>
-            </>
+            </form>
+          ) : (
+            <form onSubmit={handleRegister} className="flex flex-col gap-3">
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Email</label>
+                <div className="relative">
+                  <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={e => setEmail(e.target.value)}
+                    className="input pl-9"
+                    placeholder="vos@tudominio.com"
+                    required
+                    autoComplete="email"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Contraseña</label>
+                <div className="relative">
+                  <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    className="input pl-9 pr-10"
+                    placeholder="Mínimo 6 caracteres"
+                    required
+                    autoComplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPass(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  >
+                    {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700 block mb-1.5">Confirmar contraseña</label>
+                <div className="relative">
+                  <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type={showPass ? 'text' : 'password'}
+                    value={confirm}
+                    onChange={e => setConfirm(e.target.value)}
+                    className="input pl-9"
+                    placeholder="Repetí la contraseña"
+                    required
+                    autoComplete="new-password"
+                  />
+                </div>
+              </div>
+              {error && <p className="text-sm text-red-500">{error}</p>}
+              <button type="submit" disabled={loading} className="btn-primary justify-center mt-1">
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <UserPlus size={16} />}
+                Crear cuenta
+              </button>
+            </form>
           )}
         </div>
 
