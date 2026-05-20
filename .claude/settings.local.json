@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(if \\(-not $?\\) { \"Directory is empty or new\" })",
+      "Bash(npm install *)",
+      "Bash(ls \"/c/Users/jpcco/AppData/Local/Temp/claude/C--Users-jpcco-OneDrive-Escritorio-CRM-CLUDE/f1091e32-350e-4f84-913c-3fef9820ea44/tasks/\")",
+      "Bash(cd \"/c/Users/jpcco/OneDrive/Escritorio/CRM-CLUDE\" && ls node_modules/.package-lock.json 2>/dev/null && echo \"EXISTS\")",
+      "Bash(npx tsc *)",
+      "Bash(npm run *)",
+      "Bash(node_modules/.bin/next build *)",
+      "Bash(node node_modules/next/dist/bin/next build)"
+    ]
+  }
+}

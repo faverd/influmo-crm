@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #dde8ed;
+  --surface: #ffffff;
+  --brand: #f5a623;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  background-color: var(--bg);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #c9d8df; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #afc1ca; }
+
+@layer components {
+  .card {
+    @apply bg-white rounded-[16px] shadow-card p-5;
+  }
+
+  .btn-primary {
+    @apply bg-brand text-white font-semibold rounded-[10px] px-4 py-2 text-sm
+           hover:bg-brand-dark transition-colors flex items-center gap-2;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent text-gray-600 font-medium rounded-[10px] px-4 py-2 text-sm
+           hover:bg-gray-100 transition-colors flex items-center gap-2;
+  }
+
+  .btn-outline {
+    @apply bg-white border border-gray-200 text-gray-700 font-medium rounded-[10px] px-4 py-2 text-sm
+           hover:bg-gray-50 transition-colors flex items-center gap-2;
+  }
+
+  .badge-hot {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
+           bg-red-50 text-red-600;
+  }
+  .badge-warm {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
+           bg-amber-50 text-amber-600;
+  }
+  .badge-cold {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold
+           bg-gray-100 text-gray-500;
+  }
+
+  .input {
+    @apply w-full bg-gray-50 border border-gray-200 rounded-[10px] px-3 py-2 text-sm
+           text-gray-900 placeholder-gray-400 outline-none focus:ring-2 focus:ring-brand/30
+           focus:border-brand transition-colors;
+  }
+}

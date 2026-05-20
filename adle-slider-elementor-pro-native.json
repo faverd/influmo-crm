@@ -1,0 +1,391 @@
+{
+  "version": "0.4",
+  "title": "Adle AI Ad Slider - Native Elementor Pro",
+  "type": "page",
+  "content": [
+    {
+      "id": "s_main",
+      "elType": "section",
+      "isInner": false,
+      "settings": {
+        "layout": "full_width",
+        "gap": "no",
+        "height": "min-height",
+        "custom_height": {
+          "unit": "vh",
+          "size": 100
+        },
+        "background_background": "classic",
+        "background_color": "#EDE8E1",
+        "padding": {
+          "unit": "px",
+          "top": "60",
+          "right": "0",
+          "bottom": "60",
+          "left": "0",
+          "isLinked": false
+        },
+        "padding_tablet": {
+          "unit": "px",
+          "top": "40",
+          "right": "0",
+          "bottom": "40",
+          "left": "0",
+          "isLinked": false
+        },
+        "padding_mobile": {
+          "unit": "px",
+          "top": "30",
+          "right": "0",
+          "bottom": "30",
+          "left": "0",
+          "isLinked": false
+        }
+      },
+      "elements": [
+        {
+          "id": "col_main",
+          "elType": "column",
+          "settings": {
+            "_column_size": 100,
+            "align": "center"
+          },
+          "elements": [
+            {
+              "id": "w_heading",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "AI Creative Generator",
+                "header_size": "h1",
+                "align": "center",
+                "title_color": "#1A1A1A",
+                "typography_typography": "custom",
+                "typography_font_family": "Playfair Display",
+                "typography_font_size": {
+                  "unit": "px",
+                  "size": 52
+                },
+                "typography_font_size_tablet": {
+                  "unit": "px",
+                  "size": 38
+                },
+                "typography_font_size_mobile": {
+                  "unit": "px",
+                  "size": 28
+                },
+                "typography_font_weight": "700",
+                "typography_letter_spacing": {
+                  "unit": "px",
+                  "size": -1
+                },
+                "_margin": {
+                  "unit": "px",
+                  "top": "0",
+                  "right": "0",
+                  "bottom": "10",
+                  "left": "0",
+                  "isLinked": false
+                }
+              }
+            },
+            {
+              "id": "w_sub",
+              "elType": "widget",
+              "widgetType": "heading",
+              "settings": {
+                "title": "Anuncios generados en segundos.",
+                "header_size": "p",
+                "align": "center",
+                "title_color": "#888888",
+                "typography_typography": "custom",
+                "typography_font_family": "DM Sans",
+                "typography_font_size": {
+                  "unit": "px",
+                  "size": 16
+                },
+                "typography_font_weight": "400",
+                "_margin": {
+                  "unit": "px",
+                  "top": "0",
+                  "right": "0",
+                  "bottom": "48",
+                  "left": "0",
+                  "isLinked": false
+                }
+              }
+            },
+            {
+              "id": "w_slides",
+              "elType": "widget",
+              "widgetType": "slides",
+              "settings": {
+                "slides": [
+                  {
+                    "_id": "slide_revolut",
+                    "heading": "Instant money transfers, globally.",
+                    "description": "Send in seconds, no hidden fees.",
+                    "button_text": "Get Revolut",
+                    "button_url": {
+                      "url": "#",
+                      "is_external": false,
+                      "nofollow": false
+                    },
+                    "background_color": "#0057FF",
+                    "background_overlay": "",
+                    "background_overlay_color": "rgba(0,20,80,0.55)",
+                    "background_overlay_blend_mode": "normal",
+                    "badge_text": "Revolut"
+                  },
+                  {
+                    "_id": "slide_alo",
+                    "heading": "Elevate Your Everyday.",
+                    "description": "Celeb-approved comfort. Wear-tested for life.",
+                    "button_text": "Shop Men's New Arrivals",
+                    "button_url": {
+                      "url": "#",
+                      "is_external": false,
+                      "nofollow": false
+                    },
+                    "background_color": "#5c4a35",
+                    "background_overlay_color": "rgba(0,0,0,0.55)",
+                    "badge_text": "alo"
+                  },
+                  {
+                    "_id": "slide_notion",
+                    "heading": "One workspace. Zero busywork.",
+                    "description": "AI Agents automate tasks & take notes so you don't have to.",
+                    "button_text": "Get Notion AI",
+                    "button_url": {
+                      "url": "#",
+                      "is_external": false,
+                      "nofollow": false
+                    },
+                    "background_color": "#F5F4F0",
+                    "background_overlay_color": "rgba(0,0,0,0)",
+                    "badge_text": "Notion"
+                  },
+                  {
+                    "_id": "slide_away",
+                    "heading": "Pack Smarter. Travel Better.",
+                    "description": "Engineered for organized, effortless journeys.",
+                    "button_text": "Shop The Bigger Carry-On",
+                    "button_url": {
+                      "url": "#",
+                      "is_external": false,
+                      "nofollow": false
+                    },
+                    "background_color": "#2a2520",
+                    "background_overlay_color": "rgba(0,0,0,0.5)",
+                    "badge_text": "AWAY"
+                  },
+                  {
+                    "_id": "slide_mailchimp",
+                    "heading": "Turn Behavioral Data into Loyal Customers",
+                    "description": "AI-powered email & SMS marketing made effortless.",
+                    "button_text": "Start Your Free Trial",
+                    "button_url": {
+                      "url": "#",
+                      "is_external": false,
+                      "nofollow": false
+                    },
+                    "background_color": "#FFF8E7",
+                    "background_overlay_color": "rgba(0,0,0,0)",
+                    "badge_text": "Mailchimp"
+                  },
+                  {
+                    "_id": "slide_glossier",
+                    "heading": "Meet Your New Everyday Body Ritual.",
+                    "description": "Fast-absorbing crème · 24-hour hydration · 45 USD",
+                    "button_text": "Shop Crème de You",
+                    "button_url": {
+                      "url": "#",
+                      "is_external": false,
+                      "nofollow": false
+                    },
+                    "background_color": "#F0DDD4",
+                    "background_overlay_color": "rgba(0,0,0,0)",
+                    "badge_text": "Glossier."
+                  }
+                ],
+                "effect": "slide",
+                "direction": "ltr",
+                "autoplay": "yes",
+                "autoplay_speed": 3000,
+                "pause_on_hover": "yes",
+                "infinite": "yes",
+                "transition_speed": 600,
+                "navigation": "both",
+                "pagination": "bullets",
+                "slides_per_view": "3",
+                "slides_per_view_tablet": "2",
+                "slides_per_view_mobile": "1",
+                "space_between": {
+                  "unit": "px",
+                  "size": 24
+                },
+                "space_between_tablet": {
+                  "unit": "px",
+                  "size": 16
+                },
+                "space_between_mobile": {
+                  "unit": "px",
+                  "size": 0
+                },
+                "height": {
+                  "unit": "px",
+                  "size": 520
+                },
+                "height_mobile": {
+                  "unit": "px",
+                  "size": 480
+                },
+                "content_max_width": {
+                  "unit": "%",
+                  "size": 85
+                },
+                "title_typography_typography": "custom",
+                "title_typography_font_family": "Playfair Display",
+                "title_typography_font_size": {
+                  "unit": "px",
+                  "size": 26
+                },
+                "title_typography_font_size_tablet": {
+                  "unit": "px",
+                  "size": 22
+                },
+                "title_typography_font_size_mobile": {
+                  "unit": "px",
+                  "size": 20
+                },
+                "title_typography_font_weight": "700",
+                "title_typography_line_height": {
+                  "unit": "em",
+                  "size": 1.2
+                },
+                "description_typography_typography": "custom",
+                "description_typography_font_family": "DM Sans",
+                "description_typography_font_size": {
+                  "unit": "px",
+                  "size": 13
+                },
+                "description_typography_font_weight": "400",
+                "description_typography_line_height": {
+                  "unit": "em",
+                  "size": 1.55
+                },
+                "button_typography_typography": "custom",
+                "button_typography_font_family": "DM Sans",
+                "button_typography_font_size": {
+                  "unit": "px",
+                  "size": 12
+                },
+                "button_typography_font_weight": "700",
+                "button_typography_text_transform": "uppercase",
+                "button_typography_letter_spacing": {
+                  "unit": "px",
+                  "size": 1
+                },
+                "button_border_radius": {
+                  "unit": "px",
+                  "top": "8",
+                  "right": "8",
+                  "bottom": "8",
+                  "left": "8",
+                  "isLinked": true
+                },
+                "button_padding": {
+                  "unit": "px",
+                  "top": "10",
+                  "right": "20",
+                  "bottom": "10",
+                  "left": "20",
+                  "isLinked": false
+                },
+                "button_color": "#FFFFFF",
+                "button_background_color": "rgba(255,255,255,0.15)",
+                "button_border_color": "rgba(255,255,255,0.6)",
+                "button_border_width": {
+                  "unit": "px",
+                  "top": "1",
+                  "right": "1",
+                  "bottom": "1",
+                  "left": "1",
+                  "isLinked": true
+                },
+                "button_hover_color": "#1A1A1A",
+                "button_hover_background_color": "#FFFFFF",
+                "button_hover_border_color": "#FFFFFF",
+                "heading_color": "#FFFFFF",
+                "description_color": "rgba(255,255,255,0.85)",
+                "content_align": "left",
+                "content_position": "bottom",
+                "navigation_color": "#FFFFFF",
+                "navigation_color_hover": "#DDDDDD",
+                "navigation_arrow_size": {
+                  "unit": "px",
+                  "size": 18
+                },
+                "navigation_arrow_box_size": {
+                  "unit": "px",
+                  "size": 44
+                },
+                "navigation_arrow_bg_color": "rgba(26,26,26,0.7)",
+                "navigation_arrow_border_radius": {
+                  "unit": "px",
+                  "top": "50",
+                  "right": "50",
+                  "bottom": "50",
+                  "left": "50",
+                  "isLinked": true
+                },
+                "pagination_color": "rgba(26,26,26,0.25)",
+                "pagination_color_active": "#1A1A1A",
+                "border_radius": {
+                  "unit": "px",
+                  "top": "20",
+                  "right": "20",
+                  "bottom": "20",
+                  "left": "20",
+                  "isLinked": true
+                },
+                "overlay_color": "rgba(0,0,0,0.3)",
+                "css_classes": "adle-slides-widget",
+                "custom_css": ".adle-slides-widget .elementor-slides-wrapper { overflow: visible !important; } .adle-slides-widget .swiper-slide { border-radius: 20px; overflow: hidden; transition: transform 0.4s ease, box-shadow 0.4s ease !important; } .adle-slides-widget .swiper-slide-active { transform: scale(1.06) !important; box-shadow: 0 20px 60px rgba(0,0,0,0.25) !important; z-index: 10; } .adle-slides-widget .swiper-slide:not(.swiper-slide-active) { opacity: 0.72; } .adle-slides-widget .elementor-slide-heading { font-family: 'Playfair Display', serif !important; text-shadow: 0 2px 12px rgba(0,0,0,0.3); } .adle-slides-widget .elementor-slide-button { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); } .adle-slides-widget .elementor-slide-description { text-shadow: 0 1px 6px rgba(0,0,0,0.25); }"
+              }
+            },
+            {
+              "id": "w_footer",
+              "elType": "widget",
+              "widgetType": "text-editor",
+              "settings": {
+                "editor": "<p style=\"text-align:center;\">Anuncios generados por <strong>Adle</strong> en segundos.</p>",
+                "align": "center",
+                "text_color": "#AAAAAA",
+                "typography_typography": "custom",
+                "typography_font_family": "DM Sans",
+                "typography_font_size": {
+                  "unit": "px",
+                  "size": 12
+                },
+                "typography_font_weight": "400",
+                "_margin": {
+                  "unit": "px",
+                  "top": "32",
+                  "right": "0",
+                  "bottom": "0",
+                  "left": "0",
+                  "isLinked": false
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "page_settings": {
+    "hide_title": "yes",
+    "custom_css": "@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:wght@400;500;700&display=swap'); .adle-slides-widget { width: 100% !important; } .adle-slides-widget .swiper-wrapper { align-items: center !important; } .adle-slides-widget .swiper-slide { height: 520px !important; border-radius: 20px !important; overflow: hidden !important; } .adle-slides-widget .swiper-slide:not(.swiper-slide-active) { transform: scale(0.96); opacity: 0.72; } .adle-slides-widget .swiper-slide-active { transform: scale(1.06) !important; box-shadow: 0 24px 64px rgba(0,0,0,0.28) !important; } .adle-slides-widget .elementor-slides-wrapper { overflow: visible !important; padding: 30px 0 !important; } .adle-slides-widget .elementor-slide-button { border-radius: 8px !important; font-size: 11px !important; letter-spacing: 1px !important; text-transform: uppercase !important; font-weight: 700 !important; margin-top: 14px !important; display: inline-block !important; } .adle-slides-widget .elementor-swiper-button { background: rgba(26,26,26,0.7) !important; border-radius: 50% !important; width: 44px !important; height: 44px !important; display: flex !important; align-items: center !important; justify-content: center !important; transition: background 0.2s !important; } .adle-slides-widget .elementor-swiper-button:hover { background: #1A1A1A !important; } .adle-slides-widget .swiper-pagination-bullet { background: #1A1A1A !important; opacity: 0.22 !important; width: 8px !important; height: 8px !important; } .adle-slides-widget .swiper-pagination-bullet-active { opacity: 1 !important; width: 22px !important; border-radius: 4px !important; } .adle-slides-widget .elementor-slide-content { background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.1) 60%, transparent 100%) !important; padding: 28px 24px !important; justify-content: flex-end !important; }"
+  }
+}
