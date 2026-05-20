@@ -3,29 +3,47 @@
 import { useState, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Mail, Loader2 } from 'lucide-react'
+import { Mail, Lock, Loader2, Eye, EyeOff, ArrowRight } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
-  const [sent, setSent] = useState(false)
+  const [password, setPassword] = useState('')
+  const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resetSent, setResetSent] = useState(false)
+  const [mode, setMode] = useState<'password' | 'reset'>('password')
   const searchParams = useSearchParams()
   const authError = searchParams.get('error')
+  const router = useRouter()
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${window.location.origin}/api/auth/callback` },
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) {
+      setError('Email o contraseña incorrectos')
+    } else {
+      router.push('/dashboard')
+    }
+    setLoading(false)
+  }
+
+  async function handleReset(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    const supabase = createClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/api/auth/callback`,
     })
     if (error) {
       setError(error.message)
     } else {
-      setSent(true)
+      setResetSent(true)
     }
     setLoading(false)
   }
@@ -43,21 +61,26 @@ function LoginForm() {
         </div>
 
         <div className="card">
-          {sent ? (
+          {resetSent ? (
             <div className="text-center py-4">
               <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Mail size={24} className="text-green-500" />
               </div>
               <h2 className="font-semibold text-gray-900 mb-2">Revisá tu email</h2>
-              <p className="text-sm text-gray-500">
-                Te enviamos un magic link a <strong>{email}</strong>.
-                Hacé clic en el link para acceder al CRM.
+              <p className="text-sm text-gray-500 mb-4">
+                Te enviamos un link para restablecer tu contraseña a <strong>{email}</strong>.
               </p>
+              <button
+                onClick={() => { setResetSent(false); setMode('password') }}
+                className="text-sm text-brand font-medium hover:underline"
+              >
+                Volver al login
+              </button>
             </div>
-          ) : (
+          ) : mode === 'reset' ? (
             <>
-              <h2 className="font-semibold text-gray-900 mb-1">Iniciar sesión</h2>
-              <p className="text-sm text-gray-500 mb-5">Te enviamos un link de acceso a tu email</p>
+              <h2 className="font-semibold text-gray-900 mb-1">Restablecer contraseña</h2>
+              <p className="text-sm text-gray-500 mb-5">Te enviamos un link a tu email</p>
 
               {authError && (
                 <div className="bg-red-50 text-red-600 text-sm rounded-[10px] px-4 py-3 mb-4">
@@ -65,26 +88,95 @@ function LoginForm() {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+              <form onSubmit={handleReset} className="flex flex-col gap-3">
                 <div>
-                  <label className="text-sm font-medium text-gray-700 block mb-1.5">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    className="input"
-                    placeholder="vos@tudominio.com"
-                    required
-                  />
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Email</label>
+                  <div className="relative">
+                    <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      className="input pl-9"
+                      placeholder="vos@tudominio.com"
+                      required
+                    />
+                  </div>
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}
                 <button type="submit" disabled={loading} className="btn-primary justify-center mt-1">
-                  {loading ? <Loader2 size={16} className="animate-spin" /> : <Mail size={16} />}
-                  Enviar magic link
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                  Enviar link de recuperación
                 </button>
               </form>
+
+              <button
+                onClick={() => setMode('password')}
+                className="text-sm text-gray-400 hover:text-gray-600 mt-4 block text-center w-full"
+              >
+                ← Volver al login
+              </button>
+            </>
+          ) : (
+            <>
+              <h2 className="font-semibold text-gray-900 mb-1">Iniciar sesión</h2>
+              <p className="text-sm text-gray-500 mb-5">Ingresá con tu email y contraseña</p>
+
+              {authError && (
+                <div className="bg-red-50 text-red-600 text-sm rounded-[10px] px-4 py-3 mb-4">
+                  Error de autenticación. Intentá de nuevo.
+                </div>
+              )}
+
+              <form onSubmit={handleLogin} className="flex flex-col gap-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Email</label>
+                  <div className="relative">
+                    <Mail size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      className="input pl-9"
+                      placeholder="vos@tudominio.com"
+                      required
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-700 block mb-1.5">Contraseña</label>
+                  <div className="relative">
+                    <Lock size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type={showPass ? 'text' : 'password'}
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      className="input pl-9 pr-10"
+                      placeholder="••••••••"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPass(v => !v)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                    >
+                      {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                </div>
+                {error && <p className="text-sm text-red-500">{error}</p>}
+                <button type="submit" disabled={loading} className="btn-primary justify-center mt-1">
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                  Ingresar
+                </button>
+              </form>
+
+              <button
+                onClick={() => setMode('reset')}
+                className="text-sm text-brand hover:underline mt-4 block text-center w-full"
+              >
+                Olvidé mi contraseña
+              </button>
             </>
           )}
         </div>
