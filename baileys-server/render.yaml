@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: influmo-baileys
+    runtime: node
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: CRM_WEBHOOK_URL
+        value: https://influmo-crm.vercel.app/api/webhook
+      - key: API_SECRET
+        value: baileys-secret-2024
+    healthCheckPath: /health
