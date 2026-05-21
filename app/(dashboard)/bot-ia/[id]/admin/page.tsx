@@ -581,7 +581,10 @@ export default function BotAdminPage() {
   const [tab, setTab] = useState<'config' | 'documents' | 'analytics'>('config')
 
   useEffect(() => {
-    fetch(`/api/bots/${botId}`).then(r => r.json()).then(setBot)
+    fetch(`/api/bots/${botId}`)
+      .then(r => r.json())
+      .then(d => { if (d && !d.error) setBot(d) })
+      .catch(() => {})
   }, [botId])
 
   if (!bot) return (

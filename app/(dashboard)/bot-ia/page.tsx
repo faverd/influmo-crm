@@ -394,7 +394,8 @@ export default function BotIAPage() {
   useEffect(() => {
     fetch('/api/bots')
       .then(r => r.json())
-      .then(setBots)
+      .then(data => { if (Array.isArray(data)) setBots(data) })
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 

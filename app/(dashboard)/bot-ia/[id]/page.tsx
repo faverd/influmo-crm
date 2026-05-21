@@ -153,10 +153,10 @@ export default function BotChatPage() {
   // Load bot config + conversations
   useEffect(() => {
     Promise.all([
-      fetch(`/api/bots/${botId}`).then(r => r.json()),
-      fetch(`/api/bots/${botId}/conversations`).then(r => r.json()),
+      fetch(`/api/bots/${botId}`).then(r => r.json()).catch(() => null),
+      fetch(`/api/bots/${botId}/conversations`).then(r => r.json()).catch(() => []),
     ]).then(([b, convs]) => {
-      setBot(b)
+      if (b && !b.error) setBot(b)
       if (Array.isArray(convs)) setConversations(convs)
     })
   }, [botId])

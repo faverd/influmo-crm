@@ -2,14 +2,19 @@ import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 
 export async function GET() {
-  const supabase = createServiceClient()
-  const { data, error } = await supabase
-    .from('bots')
-    .select('id, name, description, mode, provider, model, is_active, avatar_color, total_conversations, total_messages, total_tokens, created_at')
-    .order('created_at', { ascending: false })
+  try {
+    const supabase = createServiceClient()
+    const { data, error } = await supabase
+      .from('bots')
+      .select('id, name, description, mode, provider, model, is_active, avatar_color, total_conversations, total_messages, total_tokens, created_at')
+      .order('created_at', { ascending: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json(data)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json(data ?? [])
+  } catch (err) {
+    console.error('[/api/bots GET]', err)
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
 }
 
 export async function POST(req: Request) {
