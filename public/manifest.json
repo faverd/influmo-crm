@@ -1,0 +1,14 @@
+{
+  "name": "Influmo CRM — Clima Agrícola",
+  "short_name": "Influmo Agro",
+  "description": "CRM con consultor IA y clima agrícola inteligente para el Perú",
+  "start_url": "/clima",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

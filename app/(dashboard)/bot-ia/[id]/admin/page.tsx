@@ -7,7 +7,7 @@ import {
   Bot, Settings2, FileText, BarChart3, ChevronLeft,
   Plus, Trash2, RefreshCw, Check, AlertCircle, Upload,
   Globe, Type, FileType, Loader2, X, CheckCircle2,
-  Clock, Zap, MessageSquare, Save, Eye, EyeOff,
+  Clock, Zap, MessageSquare, Save, Eye, EyeOff, Volume2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
@@ -21,6 +21,7 @@ interface BotConfig {
   temperature: number; max_tokens: number; personality: string
   language: string; system_prompt: string; is_active: boolean
   avatar_color: string; total_conversations: number; total_messages: number; total_tokens: number
+  tts_enabled?: boolean; tts_voice?: string; tts_speed?: number; tts_pitch?: number
 }
 
 interface BotDocument {
@@ -229,6 +230,62 @@ function ConfigTab({ bot, onSave }: { bot: BotConfig; onSave: (b: BotConfig) => 
             <textarea value={form.system_prompt} onChange={e => set('system_prompt', e.target.value)}
               rows={5} placeholder="Instrucciones adicionales para el bot. El modo base ya incluye el comportamiento estándar..."
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none font-mono text-xs" />
+          </div>
+        </div>
+      </div>
+
+      {/* Audio (TTS) config */}
+      <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <h3 className="font-semibold text-gray-900 mb-5 flex items-center gap-2">
+          <Volume2 size={16} /> Configuración de Audio (TTS)
+        </h3>
+
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm text-gray-700">Lectura por voz activada</span>
+          <button onClick={() => set('tts_enabled', !(form.tts_enabled ?? true))}
+            className={cn('relative w-12 h-6 rounded-full transition-colors', (form.tts_enabled ?? true) ? 'bg-brand' : 'bg-gray-200')}>
+            <span className={cn('absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-all', (form.tts_enabled ?? true) ? 'left-7' : 'left-1')} />
+          </button>
+        </div>
+
+        <div className="mb-4">
+          <label className="text-xs font-medium text-gray-500 block mb-1">Voz</label>
+          <select value={form.tts_voice ?? 'auto'} onChange={e => set('tts_voice', e.target.value)}
+            className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 bg-white">
+            <option value="auto">Auto (sistema)</option>
+          </select>
+          <p className="text-[11px] text-gray-400 mt-1">La voz depende de las disponibles en el navegador del usuario.</p>
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="text-xs font-medium text-gray-500 block mb-1">
+              Velocidad — <span className="text-brand font-semibold">{((form.tts_speed ?? 1) < 0.85) ? 'Lento' : (form.tts_speed ?? 1) > 1.15 ? 'Rápido' : 'Normal'}</span>
+            </label>
+            <input type="range" min="0.5" max="2" step="0.1" value={form.tts_speed ?? 1}
+              onChange={e => set('tts_speed', parseFloat(e.target.value))} className="w-full accent-brand" />
+            <div className="flex justify-between text-[10px] text-gray-400"><span>Lento</span><span>Normal</span><span>Rápido</span></div>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-gray-500 block mb-1">
+              Tono — <span className="text-brand font-semibold">{((form.tts_pitch ?? 1) < 0.85) ? 'Grave' : (form.tts_pitch ?? 1) > 1.15 ? 'Agudo' : 'Normal'}</span>
+            </label>
+            <input type="range" min="0.5" max="2" step="0.1" value={form.tts_pitch ?? 1}
+              onChange={e => set('tts_pitch', parseFloat(e.target.value))} className="w-full accent-brand" />
+            <div className="flex justify-between text-[10px] text-gray-400"><span>Grave</span><span>Normal</span><span>Agudo</span></div>
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <p className="text-xs font-medium text-gray-500 mb-2">Preajustes de velocidad</p>
+          <div className="grid grid-cols-4 gap-2">
+            {[['Lento', 0.7], ['Normal', 1], ['Fluido', 1.3], ['Rápido', 1.6]].map(([label, val]) => (
+              <button key={label as string} onClick={() => set('tts_speed', val as number)}
+                className={cn('px-3 py-2 rounded-xl text-xs font-medium transition-colors',
+                  (form.tts_speed ?? 1) === val ? 'bg-brand text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200')}>
+                {label}
+              </button>
+            ))}
           </div>
         </div>
       </div>

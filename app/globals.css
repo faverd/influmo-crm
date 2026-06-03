@@ -4,10 +4,17 @@
 @tailwind utilities;
 
 :root {
-  --bg: #dde8ed;
+  --bg: #f3f4f6;
   --surface: #ffffff;
-  --brand: #f5a623;
+  --brand: #16a34a;
+  /* Dynamic brand color (overridden by BrandingProvider) — default BERAGRO green */
+  --brand-rgb: 22 163 74;
+  --brand-dark-rgb: 21 128 61;
+  --brand-light: #dcfce7;
 }
+
+/* Black & white mode — desaturates the whole UI */
+html.bw-mode { filter: grayscale(1); }
 
 * {
   box-sizing: border-box;

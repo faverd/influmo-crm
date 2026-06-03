@@ -12,9 +12,9 @@ const config: Config = {
         bg: '#dde8ed',
         surface: '#ffffff',
         brand: {
-          DEFAULT: '#f5a623',
-          light: '#fef3dc',
-          dark: '#d4891a',
+          DEFAULT: 'rgb(var(--brand-rgb) / <alpha-value>)',
+          light: 'var(--brand-light)',
+          dark: 'rgb(var(--brand-dark-rgb) / <alpha-value>)',
         },
         hot: '#ef4444',
         warm: '#f5a623',

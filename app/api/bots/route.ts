@@ -6,7 +6,7 @@ export async function GET() {
     const supabase = createServiceClient()
     const { data, error } = await supabase
       .from('bots')
-      .select('id, name, description, mode, provider, model, is_active, avatar_color, total_conversations, total_messages, total_tokens, created_at')
+      .select('id, name, description, mode, provider, model, is_active, avatar_color, total_conversations, total_messages, total_tokens, created_at, language, tts_enabled, tts_voice, tts_speed, tts_pitch')
       .order('created_at', { ascending: false })
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })

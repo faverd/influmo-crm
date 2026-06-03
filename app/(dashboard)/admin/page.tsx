@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Plus, Trash2, Shield, Mail, RefreshCw, CheckCircle, XCircle } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { Plus, Trash2, Shield, Mail, RefreshCw, CheckCircle, XCircle, UserCog, Leaf, Tractor, Building2 } from 'lucide-react'
 
 interface User {
   id: string
@@ -9,6 +9,21 @@ interface User {
   created_at: string
   last_sign_in_at: string | null
   role: string
+}
+
+interface UserRole {
+  id: string
+  email: string
+  role: 'administrador' | 'agronomo' | 'agricultor' | 'empresa'
+  full_name: string
+  created_at: string
+}
+
+const ROLE_META: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+  administrador: { label: 'Administrador', icon: Shield,    color: 'bg-purple-100 text-purple-700' },
+  agronomo:      { label: 'Ing. Agrónomo', icon: Leaf,      color: 'bg-green-100 text-green-700' },
+  agricultor:    { label: 'Agricultor',    icon: Tractor,   color: 'bg-amber-100 text-amber-700' },
+  empresa:       { label: 'Empresa Agro',  icon: Building2, color: 'bg-blue-100 text-blue-700' },
 }
 
 export default function AdminPage() {
@@ -26,7 +41,35 @@ export default function AdminPage() {
       .catch(() => setLoading(false))
   }
 
-  useEffect(() => { load() }, [])
+  // ── Roles ──
+  const [roles, setRoles] = useState<UserRole[]>([])
+  const [roleForm, setRoleForm] = useState({ email: '', full_name: '', role: 'agricultor' })
+  const [savingRole, setSavingRole] = useState(false)
+
+  const loadRoles = useCallback(() => {
+    fetch('/api/admin/roles').then(r => r.json()).then(d => { if (Array.isArray(d)) setRoles(d) }).catch(() => {})
+  }, [])
+
+  async function saveRole(e: React.FormEvent) {
+    e.preventDefault()
+    if (!roleForm.email) return
+    setSavingRole(true)
+    try {
+      const res = await fetch('/api/admin/roles', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(roleForm),
+      })
+      if (res.ok) { setRoleForm({ email: '', full_name: '', role: 'agricultor' }); loadRoles() }
+    } finally { setSavingRole(false) }
+  }
+
+  async function deleteRole(id: string) {
+    if (!confirm('¿Eliminar este rol asignado?')) return
+    await fetch('/api/admin/roles', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+    loadRoles()
+  }
+
+  useEffect(() => { load(); loadRoles() }, [loadRoles])
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault()
@@ -165,6 +208,63 @@ export default function AdminPage() {
                 </button>
               </div>
             ))}
+          </div>
+        )}
+      </div>
+
+      {/* Roles & permissions */}
+      <div className="card mt-5">
+        <h2 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+          <UserCog size={16} className="text-brand" /> Roles y permisos
+        </h2>
+        <p className="text-xs text-gray-400 mb-4">Asigna un rol a cada usuario del sistema</p>
+
+        <form onSubmit={saveRole} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto_auto] gap-2 mb-4">
+          <input type="email" value={roleForm.email} onChange={e => setRoleForm(f => ({ ...f, email: e.target.value }))}
+            placeholder="email@empresa.com" required
+            className="input text-sm" />
+          <input value={roleForm.full_name} onChange={e => setRoleForm(f => ({ ...f, full_name: e.target.value }))}
+            placeholder="Nombre completo (opcional)"
+            className="input text-sm" />
+          <select value={roleForm.role} onChange={e => setRoleForm(f => ({ ...f, role: e.target.value }))}
+            className="input text-sm bg-white">
+            {Object.entries(ROLE_META).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+          </select>
+          <button type="submit" disabled={savingRole} className="btn-primary text-sm whitespace-nowrap">
+            {savingRole ? '...' : 'Asignar'}
+          </button>
+        </form>
+
+        {roles.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-6">No hay roles asignados aún</p>
+        ) : (
+          <div className="flex flex-col divide-y divide-gray-100">
+            {roles.map(r => {
+              const meta = ROLE_META[r.role] ?? ROLE_META.agricultor
+              const RoleIcon = meta.icon
+              return (
+                <div key={r.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center">
+                      <RoleIcon size={16} className="text-gray-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{r.full_name || r.email}</p>
+                      <p className="text-xs text-gray-400">{r.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[11px] font-medium px-2.5 py-1 rounded-full flex items-center gap-1 ${meta.color}`}>
+                      <RoleIcon size={11} /> {meta.label}
+                    </span>
+                    <button onClick={() => deleteRole(r.id)}
+                      className="w-8 h-8 rounded-lg flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500 transition-colors">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>

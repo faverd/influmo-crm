@@ -3,21 +3,20 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import {
-  LayoutDashboard, MessageSquare, Calendar, Kanban,
-  Settings, FlaskConical, Shield, LogOut, ChevronLeft, ChevronRight, Megaphone, Bot,
+  LayoutDashboard, Calendar, Kanban,
+  Settings, Shield, LogOut, ChevronLeft, ChevronRight, Bot, Contact,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { getBranding } from '@/lib/branding-cache'
 import { useState, useEffect } from 'react'
 
 const NAV = [
   { href: '/dashboard',     icon: LayoutDashboard, label: 'Dashboard' },
-  { href: '/conversations', icon: MessageSquare,   label: 'Conversaciones' },
+  { href: '/contactos',     icon: Contact,         label: 'Gestión Contactos' },
   { href: '/kanban',        icon: Kanban,          label: 'Kanban' },
   { href: '/calendar',      icon: Calendar,        label: 'Calendario' },
-  { href: '/broadcasts',    icon: Megaphone,       label: 'Difusión' },
   { href: '/bot-ia',        icon: Bot,             label: 'Consultor BOT IA' },
-  { href: '/test-chat',     icon: FlaskConical,    label: 'Test Chat' },
 ]
 
 const BOTTOM_NAV = [
@@ -30,9 +29,11 @@ export default function Sidebar() {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [email, setEmail] = useState('')
+  const [navLogo, setNavLogo] = useState('')
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ''))
+    getBranding().then(b => { if (b.brand_nav_logo) setNavLogo(b.brand_nav_logo) })
   }, [])
 
   async function handleLogout() {
@@ -56,14 +57,21 @@ export default function Sidebar() {
 
       {/* Logo */}
       <div className={cn('flex items-center gap-2.5 px-4 py-5 border-b border-gray-100', collapsed && 'justify-center px-2')}>
-        <div className="w-8 h-8 bg-brand rounded-xl flex items-center justify-center shrink-0 shadow-sm">
-          <span className="text-white font-bold text-xs">In</span>
-        </div>
-        {!collapsed && (
-          <div>
-            <p className="font-bold text-gray-900 text-sm leading-tight">Influmo</p>
-            <p className="text-[10px] text-gray-400 leading-tight">WhatsApp CRM</p>
-          </div>
+        {navLogo ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={navLogo} alt="Logo" className={cn('object-contain shrink-0', collapsed ? 'w-8 h-8' : 'h-9 max-w-[150px]')} />
+        ) : (
+          <>
+            <div className="w-8 h-8 bg-brand rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+              <span className="text-white font-bold text-xs">In</span>
+            </div>
+            {!collapsed && (
+              <div>
+                <p className="font-bold text-gray-900 text-sm leading-tight">Influmo</p>
+                <p className="text-[10px] text-gray-400 leading-tight">Decoración de Interiores</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 

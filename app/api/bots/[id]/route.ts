@@ -26,6 +26,7 @@ export async function PUT(req: Request, { params }: Params) {
     'name', 'description', 'mode', 'provider', 'model',
     'api_key', 'embedding_key', 'temperature', 'max_tokens',
     'personality', 'language', 'system_prompt', 'is_active', 'avatar_color',
+    'tts_enabled', 'tts_voice', 'tts_speed', 'tts_pitch', 'welcome_message',
   ]
   const patch = Object.fromEntries(
     Object.entries(body).filter(([k]) => allowed.includes(k))

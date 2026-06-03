@@ -1,4 +1,7 @@
 // Document text extraction and chunking for RAG
+// pdf-parse v1.x exports a function directly
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const pdfParse: (buf: Buffer) => Promise<{ text: string; numpages: number }> = require('pdf-parse')
 
 export interface ProcessedDocument {
   text: string
@@ -10,31 +13,32 @@ export interface ProcessedDocument {
 const CHUNK_SIZE    = 800  // characters per chunk
 const CHUNK_OVERLAP = 150  // overlap between consecutive chunks
 
+const MAX_CHUNKS = 200  // safety cap
+
 export function chunkText(text: string): string[] {
-  const cleaned = text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim()
+  const cleaned = text.replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').replace(/[ \t]{2,}/g, ' ').trim()
   if (!cleaned) return []
 
   const chunks: string[] = []
+  const step = Math.max(1, CHUNK_SIZE - CHUNK_OVERLAP)  // always > 0 → guaranteed progress
   let start = 0
 
-  while (start < cleaned.length) {
+  while (start < cleaned.length && chunks.length < MAX_CHUNKS) {
     const end = Math.min(start + CHUNK_SIZE, cleaned.length)
-    let slice = cleaned.slice(start, end)
-
-    // Prefer to break at paragraph boundary
-    if (end < cleaned.length) {
-      const paraBreak = slice.lastIndexOf('\n\n')
-      const sentBreak = slice.lastIndexOf('. ')
-      const breakAt    = paraBreak > 400 ? paraBreak : sentBreak > 400 ? sentBreak + 1 : slice.length
-      slice = slice.slice(0, breakAt).trim()
-    }
-
-    if (slice.length > 50) chunks.push(slice)
-    start += slice.length - CHUNK_OVERLAP
-    if (start >= cleaned.length) break
+    const slice = cleaned.slice(start, end).trim()
+    if (slice.length > 30) chunks.push(slice)
+    start += step
   }
 
   return chunks
+}
+
+// ── PDF text extraction ───────────────────────────────────────────────────────
+
+export async function extractTextFromPdf(buffer: Buffer): Promise<string> {
+  // Limit to first 30 pages to avoid memory issues on large PDFs
+  const data = await (pdfParse as (b: Buffer, o?: { max?: number }) => Promise<{ text: string }>)(buffer, { max: 30 })
+  return (data.text ?? '').trim()
 }
 
 // ── URL scraping ──────────────────────────────────────────────────────────────
@@ -78,12 +82,15 @@ export function processPlainText(text: string): ProcessedDocument {
 
 // ── File type detection ───────────────────────────────────────────────────────
 
-export function detectDocType(filename: string): 'pdf' | 'docx' | 'xlsx' | 'txt' | 'url' | 'text' {
+export function detectDocType(filename: string): 'pdf' | 'docx' | 'xlsx' | 'txt' | 'url' | 'text' | 'image' | 'md' | 'csv' {
   const ext = filename.split('.').pop()?.toLowerCase()
   if (ext === 'pdf')            return 'pdf'
   if (ext === 'docx' || ext === 'doc') return 'docx'
   if (ext === 'xlsx' || ext === 'xls') return 'xlsx'
+  if (ext === 'md')             return 'md'
+  if (ext === 'csv')            return 'csv'
   if (ext === 'txt')            return 'txt'
+  if (['jpg','jpeg','png','webp','gif','bmp','svg'].includes(ext ?? '')) return 'image'
   return 'txt'
 }
 

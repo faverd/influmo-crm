@@ -3,6 +3,7 @@ export type AIProvider = 'openai' | 'gemini' | 'openrouter'
 export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
+  images?: string[]  // image URLs for vision (user messages only)
 }
 
 export interface ChatOptions {
@@ -46,12 +47,32 @@ export async function streamChat(
 // ── OpenAI ────────────────────────────────────────────────────────────────────
 
 async function openaiStream(messages: ChatMessage[], opts: ChatOptions) {
+  // Convert messages: if a message has images, use multimodal content array
+  const hasImages = messages.some(m => m.images && m.images.length > 0)
+  const apiMessages = messages.map(m => {
+    if (m.images && m.images.length > 0) {
+      return {
+        role: m.role,
+        content: [
+          { type: 'text', text: m.content || 'Analiza esta imagen en detalle.' },
+          ...m.images.map(url => ({ type: 'image_url', image_url: { url } })),
+        ],
+      }
+    }
+    return { role: m.role, content: m.content }
+  })
+
+  // Vision requires a vision-capable model
+  const model = hasImages && !/gpt-4o|gpt-4-turbo|gpt-4-vision/.test(opts.model)
+    ? 'gpt-4o-mini'
+    : opts.model
+
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: opts.model,
-      messages,
+      model,
+      messages: apiMessages,
       temperature: opts.temperature ?? 0.7,
       max_tokens: opts.maxTokens ?? 2048,
       stream: true,
