@@ -41,6 +41,7 @@ type FontSize = 'A-sm' | 'A-md' | 'A-lg'
 export default function BandejaPage() {
   const [mensajes, setMensajes] = useState<Msg[]>([])
   const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing]   = useState(false)
   const [folder, setFolder]     = useState('bandeja')
   const [selected, setSelected] = useState<Msg | null>(null)
   const [search, setSearch]     = useState('')
@@ -66,7 +67,26 @@ export default function BandejaPage() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    load().then(() => sincronizar(true))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [load])
+
+  async function sincronizar(silent = false) {
+    setSyncing(true)
+    try {
+      const r = await fetch('/api/comunicacion/sync', { method: 'POST' })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok || d.error) {
+        if (!silent) await alertDialog(d.error || 'No se pudo sincronizar. Revisa la configuración IMAP en Comunicación → Configuración.')
+      } else {
+        await load()
+        if (!silent && d.nuevos === 0) await alertDialog('Sincronización completa. No hay correos nuevos.', { title: 'Bandeja al día' })
+      }
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   async function patch(id: string, body: Partial<Pick<Msg, 'leido' | 'estrella' | 'folder'>>) {
     setMensajes(m => m.map(x => x.id === id ? { ...x, ...body } : x))
@@ -247,9 +267,9 @@ export default function BandejaPage() {
               className="w-full pl-7 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-brand/30 bg-gray-50" />
           </div>
           <div className="flex items-center gap-1">
-            <button onClick={load}
-              className="flex items-center gap-1 text-[11px] font-medium text-brand border border-brand/20 bg-brand/5 px-2.5 py-1 rounded-lg hover:bg-brand/10 transition">
-              <RefreshCw size={10} className={loading ? 'animate-spin' : ''} /> Sincronizar
+            <button onClick={() => sincronizar()} disabled={syncing}
+              className="flex items-center gap-1 text-[11px] font-medium text-brand border border-brand/20 bg-brand/5 px-2.5 py-1 rounded-lg hover:bg-brand/10 transition disabled:opacity-60">
+              <RefreshCw size={10} className={syncing || loading ? 'animate-spin' : ''} /> {syncing ? 'Sincronizando...' : 'Sincronizar'}
             </button>
             <button onClick={marcarTodoLeido}
               className="text-[11px] font-medium text-gray-600 px-2.5 py-1 rounded-lg hover:bg-gray-100 transition">

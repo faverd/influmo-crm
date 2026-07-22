@@ -75,7 +75,9 @@ export default function ComunicacionConfigPage() {
   const [imapResult, setImapResult] = useState<{ ok: boolean; error?: string } | null>(null)
   const [waResult, setWaResult] = useState<{ ok: boolean; error?: string; phone?: string } | null>(null)
   const [waStatus, setWaStatus] = useState<{ connected: boolean; webhook_verify_token_set: boolean } | null>(null)
+  const [sigInitial, setSigInitial] = useState('')
   const sigRef = useRef<HTMLDivElement>(null)
+  const sigInit = useRef(false)
 
   const set = (key: keyof Form, value: string) => setForm(f => ({ ...f, [key]: value }))
 
@@ -85,14 +87,24 @@ export default function ComunicacionConfigPage() {
       fetch('/api/whatsapp/status').then(r => r.json()).catch(() => null),
     ]).then(([s, wa]) => {
       if (s && !s.error) {
-        setForm(f => ({ ...f, ...s, smtp_pass: '', imap_pass: '', wa_token: '' }))
-        setSecretsSet(s.secretsSet || {})
-        setTimeout(() => { if (sigRef.current) sigRef.current.innerHTML = s.signature_html || '' }, 0)
+        const { secretsSet: secretsFromApi, ...rest } = s
+        setForm(f => ({ ...f, ...rest, smtp_pass: '', imap_pass: '', wa_token: '' }))
+        setSecretsSet(secretsFromApi || {})
+        setSigInitial(s.signature_html || '')
       }
       if (wa) setWaStatus(wa)
       setLoading(false)
     })
   }, [])
+
+  // Populate the contentEditable signature once the form has rendered (avoids a
+  // race where the ref doesn't exist yet while `loading` is still true).
+  useEffect(() => {
+    if (!loading && sigRef.current && !sigInit.current) {
+      sigRef.current.innerHTML = sigInitial
+      sigInit.current = true
+    }
+  }, [loading, sigInitial])
 
   const smtpConfigured = Boolean(form.smtp_host && form.smtp_user && (secretsSet.smtp_pass || form.smtp_pass))
   const imapConfigured = Boolean(form.imap_host && form.imap_user && (secretsSet.imap_pass || form.imap_pass))
