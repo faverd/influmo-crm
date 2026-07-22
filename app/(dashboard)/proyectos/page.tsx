@@ -1,6 +1,7 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Plus, HardHat, Search, Calendar, DollarSign, CheckSquare } from 'lucide-react'
+import { alertDialog } from '@/lib/dialogs'
 
 type Proyecto = {
   id: string; nombre: string; descripcion: string; cliente_nombre: string
@@ -42,7 +43,7 @@ export default function ProyectosPage() {
   }
 
   async function save() {
-    if (!form.nombre.trim() || !form.cliente_nombre.trim()) return alert('Nombre y cliente son requeridos')
+    if (!form.nombre.trim() || !form.cliente_nombre.trim()) return alertDialog('Nombre y cliente son requeridos')
     setSaving(true)
     const r = await fetch('/api/proyectos', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -70,18 +71,18 @@ export default function ProyectosPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Proyectos</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Seguimiento de proyectos de decoración</p>
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Proyectos</h1>
+          <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Seguimiento de proyectos de decoración</p>
         </div>
-        <button onClick={() => setModal(true)} className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
-          <Plus size={16} /> Nuevo Proyecto
+        <button onClick={() => setModal(true)} className="flex items-center gap-2 bg-brand text-white px-2.5 sm:px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
+          <Plus size={16} /> <span className="hidden sm:inline">Nuevo Proyecto</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
         {[
           { label: 'Total', value: stats.total },
           { label: 'En progreso', value: stats.activos },

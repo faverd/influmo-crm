@@ -108,13 +108,13 @@ export default function ContactosPage() {
           <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar en contactos"
             className="w-full border border-gray-200 rounded-xl pl-9 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30" />
         </div>
-        <button onClick={() => { setEditing(null); setShowModal(true) }}
-          className="flex items-center gap-1.5 px-4 py-2 bg-brand text-white rounded-xl text-sm font-medium hover:bg-brand/90">
-          <Plus size={15} /> Nuevo Contacto
+        <button onClick={() => { setEditing(null); setShowModal(true) }} title="Nuevo Contacto"
+          className="flex items-center gap-1.5 px-2.5 sm:px-4 py-2 bg-brand text-white rounded-xl text-sm font-medium hover:bg-brand/90">
+          <Plus size={15} /> <span className="hidden sm:inline">Nuevo Contacto</span>
         </button>
-        <button onClick={exportCSV}
-          className="flex items-center gap-1.5 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">
-          <Download size={15} /> Exportar
+        <button onClick={exportCSV} title="Exportar"
+          className="flex items-center gap-1.5 px-2.5 sm:px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">
+          <Download size={15} /> <span className="hidden sm:inline">Exportar</span>
         </button>
       </div>
 

@@ -1,6 +1,7 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Plus, TrendingDown, Search, Tag } from 'lucide-react'
+import { alertDialog } from '@/lib/dialogs'
 
 type Gasto = { id: string; descripcion: string; categoria: string; monto: number; moneda: string; proveedor: string; fecha: string; notas: string }
 
@@ -30,7 +31,7 @@ export default function GastosPage() {
   }
 
   async function save() {
-    if (!form.descripcion.trim() || !form.monto) return alert('Completa los campos requeridos')
+    if (!form.descripcion.trim() || !form.monto) return alertDialog('Completa los campos requeridos')
     setSaving(true)
     const r = await fetch('/api/gastos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...form, monto: parseFloat(form.monto) }) })
     if (r.ok) { setModal(false); load(); setForm({ descripcion: '', categoria: 'materiales', monto: '', moneda: 'PEN', proveedor: '', fecha: new Date().toISOString().split('T')[0], notas: '' }) }
@@ -46,18 +47,18 @@ export default function GastosPage() {
   const totalGeneral = list.reduce((s, g) => s + g.monto, 0)
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gastos</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Control de egresos y costos</p>
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Gastos</h1>
+          <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Control de egresos y costos</p>
         </div>
-        <button onClick={() => setModal(true)} className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
-          <Plus size={16} /> Registrar Gasto
+        <button onClick={() => setModal(true)} className="flex items-center gap-2 bg-brand text-white px-2.5 sm:px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
+          <Plus size={16} /> <span className="hidden sm:inline">Registrar Gasto</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
         {[
           { label: 'Total registros', value: list.length },
           { label: 'Este mes', value: `S/ ${totalMes.toFixed(2)}` },

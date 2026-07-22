@@ -1,24 +1,39 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import {
   LayoutDashboard, Calendar, Kanban, Settings, Shield, LogOut,
-  ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
+  ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Menu, X,
   Bot, Contact, DollarSign, FileText, Receipt, TrendingDown,
   Package, Boxes, Truck, MessageSquare, FileStack, Map,
-  HardHat, CheckSquare, Inbox, MessagesSquare,
+  HardHat, CheckSquare, Inbox, MessagesSquare, StickyNote, LayoutGrid,
+  CalendarDays, MapPinned, ClipboardList, MessageCircle, BarChart3,
+  Users, Settings2, LayoutPanelTop, ArrowLeftRight, Warehouse,
+  MapPin, PieChart, Store,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
 import { getBranding } from '@/lib/branding-cache'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 
 type NavItem = { href: string; icon: React.ElementType; label: string }
 type NavGroup = { label: string; icon: React.ElementType; items: NavItem[] }
 type NavEntry = NavItem | NavGroup
 
 function isGroup(e: NavEntry): e is NavGroup { return 'items' in e }
+function isActivePath(pathname: string, search: string, href: string) {
+  const [base, query] = href.split('?')
+  const baseMatch = pathname === base || pathname.startsWith(base + '/')
+  if (!baseMatch) return false
+  if (!query) return true
+  const hrefParams = new URLSearchParams(query)
+  const curParams = new URLSearchParams(search)
+  for (const [k, v] of hrefParams) {
+    if ((curParams.get(k) ?? (k === 'tab' ? 'chat' : '')) !== v) return false
+  }
+  return true
+}
 
 const NAV: NavEntry[] = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -31,14 +46,41 @@ const NAV: NavEntry[] = [
       { href: '/finanzas/gastos',       icon: TrendingDown, label: 'Gastos' },
     ],
   },
-  { href: '/kanban',   icon: Kanban,   label: 'Kanban' },
-  { href: '/calendar', icon: Calendar, label: 'Calendario' },
-  { href: '/bot-ia',   icon: Bot,      label: 'Consultor BOT IA' },
+  {
+    label: 'Kanban', icon: Kanban,
+    items: [
+      { href: '/kanban',       icon: LayoutGrid,  label: 'Tablero' },
+      { href: '/kanban/notas', icon: StickyNote,  label: 'Crear notas' },
+    ],
+  },
+  {
+    label: 'Calendario', icon: Calendar,
+    items: [
+      { href: '/calendar',        icon: CalendarDays,   label: 'Vista mensual' },
+      { href: '/calendar/zonas',  icon: MapPinned,      label: 'Eventos por zona' },
+      { href: '/calendar/tareas', icon: ClipboardList,  label: 'Tareas de campo' },
+    ],
+  },
+  {
+    label: 'Consultor BOT IA', icon: Bot,
+    items: [
+      { href: '/bot-ia?tab=chat',       icon: MessageCircle, label: 'Chat' },
+      { href: '/bot-ia?tab=bots',       icon: Bot,           label: 'Bots' },
+      { href: '/bot-ia?tab=docs',       icon: FileText,      label: 'Documentos' },
+      { href: '/bot-ia?tab=calendario', icon: CalendarDays,  label: 'Calendario' },
+      { href: '/bot-ia?tab=stats',      icon: BarChart3,     label: 'Estadísticas' },
+      { href: '/bot-ia?tab=usuarios',   icon: Users,         label: 'Usuarios' },
+      { href: '/bot-ia?tab=ajustes',    icon: Settings2,     label: 'Ajustes' },
+    ],
+  },
   {
     label: 'Almacén', icon: Package,
     items: [
-      { href: '/almacen/inventario',  icon: Boxes,  label: 'Inventario' },
-      { href: '/almacen/proveedores', icon: Truck,  label: 'Proveedores' },
+      { href: '/almacen',              icon: LayoutPanelTop, label: 'Dashboard' },
+      { href: '/almacen/inventario',   icon: Boxes,          label: 'Productos' },
+      { href: '/almacen/movimientos',  icon: ArrowLeftRight, label: 'Entradas / Salidas' },
+      { href: '/almacen/ubicaciones',  icon: Warehouse,      label: 'Ubicaciones' },
+      { href: '/almacen/proveedores',  icon: Truck,          label: 'Proveedores' },
     ],
   },
   { href: '/whatsapp',     icon: MessageSquare, label: 'WhatsApp' },
@@ -48,7 +90,14 @@ const NAV: NavEntry[] = [
       { href: '/aplicaciones/plantillas', icon: FileText, label: 'Plantillas' },
     ],
   },
-  { href: '/geo',       icon: Map,           label: 'Geolocalización' },
+  {
+    label: 'Geolocalización', icon: Map,
+    items: [
+      { href: '/geo',              icon: MapPin,   label: 'Mapa Comercial' },
+      { href: '/geo/analitica',    icon: PieChart, label: 'Analítica Geográfica' },
+      { href: '/geo/ubicaciones',  icon: Store,    label: 'Ubicaciones' },
+    ],
+  },
   {
     label: 'Proyectos', icon: HardHat,
     items: [
@@ -58,7 +107,10 @@ const NAV: NavEntry[] = [
   {
     label: 'Comunicación', icon: MessagesSquare,
     items: [
-      { href: '/comunicacion/bandeja', icon: Inbox, label: 'Bandeja' },
+      { href: '/comunicacion/bandeja',       icon: Inbox,          label: 'Bandeja de entrada' },
+      { href: '/comunicacion/contactos',     icon: Contact,        label: 'Contactos' },
+      { href: '/comunicacion/archivos',      icon: FileStack,      label: 'Archivos' },
+      { href: '/comunicacion/configuracion', icon: Settings,       label: 'Configuración' },
     ],
   },
 ]
@@ -68,12 +120,16 @@ const BOTTOM_NAV: NavItem[] = [
   { href: '/admin',    icon: Shield,   label: 'Administración' },
 ]
 
-export default function Sidebar() {
+function SidebarInner() {
   const pathname = usePathname()
   const router = useRouter()
+  const search = useSearchParams().toString()
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [navLogo, setNavLogo] = useState('')
+  const [appName, setAppName] = useState('')
+  const [appTagline, setAppTagline] = useState('')
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => {
     // auto-open group containing current path
     return new Set<string>()
@@ -81,17 +137,24 @@ export default function Sidebar() {
 
   useEffect(() => {
     createClient().auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ''))
-    getBranding().then(b => { if (b.brand_nav_logo) setNavLogo(b.brand_nav_logo) })
+    getBranding().then(b => {
+      if (b.brand_nav_logo) setNavLogo(b.brand_nav_logo)
+      if (b.brand_app_name) setAppName(b.brand_app_name)
+      if (b.brand_app_tagline) setAppTagline(b.brand_app_tagline)
+    })
     // open group that contains active route
     const active = new Set<string>()
     for (const entry of NAV) {
-      if (isGroup(entry) && entry.items.some(i => pathname.startsWith(i.href))) {
+      if (isGroup(entry) && entry.items.some(i => isActivePath(pathname, search, i.href))) {
         active.add(entry.label)
       }
     }
     setOpenGroups(active)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Close the mobile drawer whenever the route changes (link tapped)
+  useEffect(() => { setMobileOpen(false) }, [pathname])
 
   function toggleGroup(label: string) {
     setOpenGroups(prev => {
@@ -116,16 +179,44 @@ export default function Sidebar() {
   )
 
   return (
-    <aside className={cn(
-      'relative min-h-screen bg-white border-r border-gray-100 flex flex-col transition-all duration-200 shrink-0',
-      collapsed ? 'w-[72px]' : 'w-[220px]'
-    )}>
+    <>
+      {/* Mobile hamburger trigger — floats over content, stays put even when the drawer is closed.
+          Must out-rank TopBar's own z-50 stacking context or its solid bg-white paints over this. */}
       <button
-        onClick={() => setCollapsed(c => !c)}
-        className="absolute -right-3 top-14 z-10 w-6 h-6 bg-white border border-gray-200 rounded-full flex items-center justify-center shadow-sm hover:bg-gray-50 transition-colors"
+        onClick={() => setMobileOpen(true)}
+        className={cn(
+          'md:hidden fixed top-2.5 left-2.5 z-[60] w-9 h-9 bg-white border border-gray-200 rounded-xl flex items-center justify-center shadow-sm transition-opacity',
+          mobileOpen && 'opacity-0 pointer-events-none'
+        )}
       >
-        {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        <Menu size={17} className="text-gray-600" />
       </button>
+
+      {/* Mobile backdrop */}
+      {mobileOpen && (
+        <div onClick={() => setMobileOpen(false)}
+          className="md:hidden fixed inset-0 bg-black/40 z-[55]" />
+      )}
+
+      <aside className={cn(
+        'bg-white border-r border-gray-100 flex flex-col shrink-0 transition-all duration-200',
+        'fixed inset-y-0 left-0 z-[60] w-[240px]',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full',
+        'md:relative md:inset-auto md:translate-x-0 md:h-full',
+        collapsed ? 'md:w-[72px]' : 'md:w-[220px]'
+      )}>
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="md:hidden absolute right-3 top-3 z-10 w-7 h-7 flex items-center justify-center text-gray-400 hover:text-gray-700 transition-colors"
+        >
+          <X size={16} />
+        </button>
+        <button
+          onClick={() => setCollapsed(c => !c)}
+          className="hidden md:flex absolute -right-3 top-14 z-10 w-6 h-6 bg-white border border-gray-200 rounded-full items-center justify-center shadow-sm hover:bg-gray-50 transition-colors"
+        >
+          {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        </button>
 
       {/* Logo */}
       <div className={cn('flex items-center gap-2.5 px-4 py-5 border-b border-gray-100', collapsed && 'justify-center px-2')}>
@@ -135,12 +226,12 @@ export default function Sidebar() {
         ) : (
           <>
             <div className="w-8 h-8 bg-brand rounded-xl flex items-center justify-center shrink-0 shadow-sm">
-              <span className="text-white font-bold text-xs">{(process.env.NEXT_PUBLIC_APP_NAME ?? 'In').slice(0, 2).toUpperCase()}</span>
+              <span className="text-white font-bold text-xs">{(appName || process.env.NEXT_PUBLIC_APP_NAME || 'In').slice(0, 2).toUpperCase()}</span>
             </div>
             {!collapsed && (
               <div>
-                <p className="font-bold text-gray-900 text-sm leading-tight">{process.env.NEXT_PUBLIC_APP_NAME ?? 'Sistema'}</p>
-                <p className="text-[10px] text-gray-400 leading-tight">Decoración de Interiores</p>
+                <p className="font-bold text-gray-900 text-sm leading-tight">{appName || process.env.NEXT_PUBLIC_APP_NAME || 'Sistema'}</p>
+                <p className="text-[10px] text-gray-400 leading-tight">{appTagline || 'Decoración de Interiores'}</p>
               </div>
             )}
           </>
@@ -153,7 +244,7 @@ export default function Sidebar() {
           if (!isGroup(entry)) {
             const active = entry.href === '/dashboard'
               ? pathname === '/dashboard'
-              : pathname.startsWith(entry.href)
+              : isActivePath(pathname, search, entry.href)
             return (
               <Link key={entry.href} href={entry.href} title={collapsed ? entry.label : undefined}
                 className={linkClass(active)}>
@@ -165,12 +256,12 @@ export default function Sidebar() {
 
           // Group
           const isOpen = openGroups.has(entry.label)
-          const groupActive = entry.items.some(i => pathname.startsWith(i.href))
+          const groupActive = entry.items.some(i => isActivePath(pathname, search, i.href))
 
           if (collapsed) {
             // In collapsed mode, show group icon as first sub-link
             return entry.items.map(item => {
-              const active = pathname.startsWith(item.href)
+              const active = isActivePath(pathname, search, item.href)
               return (
                 <Link key={item.href} href={item.href} title={item.label}
                   className={linkClass(active)}>
@@ -196,7 +287,7 @@ export default function Sidebar() {
               {isOpen && (
                 <div className="ml-4 flex flex-col gap-0.5 mt-0.5">
                   {entry.items.map(item => {
-                    const active = pathname.startsWith(item.href)
+                    const active = isActivePath(pathname, search, item.href)
                     return (
                       <Link key={item.href} href={item.href}
                         className={cn(
@@ -218,7 +309,7 @@ export default function Sidebar() {
       {/* Bottom nav + user */}
       <div className="flex flex-col gap-0.5 p-2 border-t border-gray-100">
         {BOTTOM_NAV.map(({ href, icon: Icon, label }) => {
-          const active = pathname.startsWith(href)
+          const active = isActivePath(pathname, search, href)
           return (
             <Link key={href} href={href} title={collapsed ? label : undefined}
               className={linkClass(active)}>
@@ -244,5 +335,10 @@ export default function Sidebar() {
         </div>
       </div>
     </aside>
+    </>
   )
+}
+
+export default function Sidebar() {
+  return <Suspense><SidebarInner /></Suspense>
 }

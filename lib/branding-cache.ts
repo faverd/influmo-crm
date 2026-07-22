@@ -30,3 +30,18 @@ export function clearBrandingCache() {
   cache = null
   try { sessionStorage.removeItem('branding_cache') } catch { /* ignore */ }
 }
+
+// Applies document title + favicon from branding settings. Safe to call
+// repeatedly (e.g. right after saving in Settings, so it takes effect
+// immediately without waiting for a full page reload).
+export function applyBrandingChrome(b: Record<string, string>) {
+  if (typeof document === 'undefined') return
+  if (b.brand_app_name) document.title = b.brand_app_name
+  if (b.brand_favicon) {
+    document.querySelectorAll<HTMLLinkElement>("link[rel*='icon']").forEach(el => el.remove())
+    const link = document.createElement('link')
+    link.rel = 'icon'
+    link.href = b.brand_favicon
+    document.head.appendChild(link)
+  }
+}

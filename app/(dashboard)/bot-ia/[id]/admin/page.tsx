@@ -12,6 +12,7 @@ import {
 import { cn } from '@/lib/utils'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { confirmDialog } from '@/lib/dialogs'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -113,7 +114,7 @@ function ConfigTab({ bot, onSave }: { bot: BotConfig; onSave: (b: BotConfig) => 
             <label className="text-xs font-medium text-gray-500 block mb-1">Modo</label>
             <select value={form.mode} onChange={e => set('mode', e.target.value)}
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 bg-white">
-              {['general','sales','technical','agronomo'].map(m => (
+              {['general','asesor','distribuidor','technical','administrador','cotizador'].map(m => (
                 <option key={m} value={m}>{m.charAt(0).toUpperCase()+m.slice(1)}</option>
               ))}
             </select>
@@ -391,7 +392,7 @@ function DocumentsTab({ botId }: { botId: string }) {
   }
 
   async function deleteDoc(docId: string) {
-    if (!confirm('¿Eliminar este documento?')) return
+    if (!await confirmDialog('¿Eliminar este documento?', { danger: true, confirmLabel: 'Eliminar' })) return
     await fetch(`/api/bots/${botId}/documents/${docId}`, { method: 'DELETE' })
     setDocs(d => d.filter(x => x.id !== docId))
   }

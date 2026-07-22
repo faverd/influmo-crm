@@ -6,6 +6,7 @@ import {
   AlignLeft, Tag, Palette, GripVertical, Pencil, Calendar, Maximize2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { confirmDialog } from '@/lib/dialogs'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -102,8 +103,8 @@ export default function TrelloBoard() {
   function renameColumn(colId: string, title: string) {
     update(b => ({ ...b, columns: b.columns.map(c => c.id === colId ? { ...c, title } : c) }))
   }
-  function deleteColumn(colId: string) {
-    if (!confirm('¿Eliminar esta lista y todas sus tarjetas?')) return
+  async function deleteColumn(colId: string) {
+    if (!await confirmDialog('¿Eliminar esta lista y todas sus tarjetas?', { danger: true, confirmLabel: 'Eliminar' })) return
     update(b => ({ ...b, columns: b.columns.filter(c => c.id !== colId) }))
   }
 

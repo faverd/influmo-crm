@@ -1,6 +1,7 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import { Plus, FileText, Copy, Edit2, Tag } from 'lucide-react'
+import Link from 'next/link'
 
 const PLANTILLAS_DEFAULT = [
   { id: '1', nombre: 'Cotización de Cortinas', tipo: 'cotizacion', descripcion: 'Plantilla estándar para cotizar instalación de cortinas y persianas', variables: ['cliente','fecha','total','proyecto'] },
@@ -31,14 +32,14 @@ export default function PlantillasPage() {
   )
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Plantillas</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Documentos y formatos para tu negocio</p>
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Plantillas</h1>
+          <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Documentos y formatos para tu negocio</p>
         </div>
-        <button onClick={() => setModal(true)} className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
-          <Plus size={16} /> Nueva Plantilla
+        <button onClick={() => setModal(true)} className="flex items-center gap-2 bg-brand text-white px-2.5 sm:px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
+          <Plus size={16} /> <span className="hidden sm:inline">Nueva Plantilla</span>
         </button>
       </div>
 
@@ -73,9 +74,10 @@ export default function PlantillasPage() {
               <button className="flex-1 flex items-center justify-center gap-1.5 py-2 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition">
                 <Copy size={12} /> Usar
               </button>
-              <button className="flex items-center justify-center gap-1.5 px-3 py-2 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition">
+              <Link href={`/aplicaciones/plantillas/${p.id}`}
+                className="flex items-center justify-center gap-1.5 px-3 py-2 border border-gray-200 rounded-lg text-xs text-gray-600 hover:bg-gray-50 transition">
                 <Edit2 size={12} /> Editar
-              </button>
+              </Link>
             </div>
           </div>
         ))}

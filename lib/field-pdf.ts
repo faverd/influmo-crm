@@ -93,8 +93,8 @@ function parseRecommendation(md: string): Parsed {
 export async function generateFieldPDF(data: FieldPdfData): Promise<jsPDF> {
   const doc = new jsPDF({ unit: 'mm', format: 'a4' })
   const W = 210, H = 297, M = 16
-  // Prefer platform-uploaded logo, fallback to bundled BERAGRO logo
-  const logo = await loadImage(data.logoUrl || '/beragro-logo.png') || await loadImage('/beragro-logo.png')
+  // Prefer platform-uploaded logo
+  const logo = await loadImage(data.logoUrl || '')
   const footerY = H - 22
 
   // ── Header ──
@@ -105,11 +105,11 @@ export async function generateFieldPDF(data: FieldPdfData): Promise<jsPDF> {
     if (lh > maxH) { lh = maxH; lw = maxH * ratio }
     doc.addImage(logo.data, 'PNG', M, 11, lw, lh)
   } else {
-    doc.setTextColor(...DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.text('BERAGRO', M, 20)
+    doc.setTextColor(...DARK); doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.text(process.env.NEXT_PUBLIC_APP_NAME ?? 'Influmo CRM', M, 20)
   }
 
   doc.setTextColor(...BRAND); doc.setFont('helvetica', 'bold'); doc.setFontSize(15)
-  doc.text('RECETARIO AGRONOMICO', W - M, 17, { align: 'right' })
+  doc.text('FICHA DE PROYECTO', W - M, 17, { align: 'right' })
   doc.setTextColor(...GRAY); doc.setFont('helvetica', 'normal'); doc.setFontSize(9)
   doc.text(new Date().toLocaleDateString('es-PE', { day: '2-digit', month: 'long', year: 'numeric' }), W - M, 23, { align: 'right' })
 
@@ -228,9 +228,9 @@ function drawFooter(doc: jsPDF, W: number, H: number, M: number) {
   const y = H - 16
   doc.setDrawColor(...BRAND); doc.setLineWidth(0.5); doc.line(M, y, W - M, y)
   doc.setTextColor(...BRAND); doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5)
-  doc.text('BERAGRO  ·  Nanotecnologia Vegetal', M, y + 5)
+  doc.text(`${process.env.NEXT_PUBLIC_APP_NAME ?? 'Influmo CRM'}  ·  Decoracion de Interiores`, M, y + 5)
   doc.setTextColor(...GRAY); doc.setFont('helvetica', 'normal'); doc.setFontSize(8)
-  doc.text('www.beragro.pe   |   info@beragro.pe   |   919 038 189', M, y + 9.5)
+  doc.text('www.decorinteriores.pe   |   info@decorinteriores.pe', M, y + 9.5)
   doc.setFontSize(6.5); doc.setTextColor(160, 160, 160)
-  doc.text('Documento generado automaticamente. Dosis referenciales, consulte a su asesor tecnico.', M, y + 13)
+  doc.text('Documento generado automaticamente. Consulte a su asesor de decoracion para mas detalles.', M, y + 13)
 }

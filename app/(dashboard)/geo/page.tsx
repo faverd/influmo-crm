@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Map, MapPin, Phone, Mail, TrendingUp } from 'lucide-react'
 
@@ -30,10 +30,10 @@ export default function GeoPage() {
     : contactos.slice(0, 20)
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 max-w-7xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Geolocalización</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Distribución geográfica de clientes y proyectos</p>
+        <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Geolocalización</h1>
+        <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Distribución geográfica de clientes y proyectos</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

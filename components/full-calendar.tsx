@@ -14,11 +14,16 @@ export interface CalEvent {
   id: string; title: string; date: string; endDate?: string
   time?: string; endTime?: string; allDay?: boolean
   description?: string; location?: string; color?: string; recurrence?: string
-  emoji?: string
+  emoji?: string; zona?: string
 }
 
 const EVENT_EMOJIS = ['📌','📅','🎯','💼','📞','✅','🔔','📝','🚀','💡','🎉','⭐','📍','🍽️','✈️','🏥','💰','📦','🎤','🌱','🛠️','📊','💬','🔥']
 const EVENT_COLORS = ['#0d9488','#1a5c34','#16a34a','#2563eb','#dc2626','#ea580c','#7c3aed','#374151']
+export const ZONAS_LIMA = [
+  'San Isidro', 'Miraflores', 'La Molina', 'San Borja', 'Surco', 'Barranco',
+  'Villa El Salvador', 'San Miguel', 'Jesús María', 'Lince', 'Magdalena',
+  'Pueblo Libre', 'Chorrillos', 'Surquillo', 'La Victoria', 'Otra zona',
+]
 
 function EventModal({ initial, onSave, onDelete, onClose }: {
   initial?: Partial<CalEvent>
@@ -40,6 +45,7 @@ function EventModal({ initial, onSave, onDelete, onClose }: {
     color: initial?.color ?? EVENT_COLORS[0],
     recurrence: initial?.recurrence ?? 'none',
     emoji: initial?.emoji ?? '📌',
+    zona: initial?.zona ?? '',
   })
   const [showEmojis, setShowEmojis] = useState(false)
   const set = (k: string, v: unknown) => setForm(f => ({ ...f, [k]: v }))
@@ -59,6 +65,7 @@ function EventModal({ initial, onSave, onDelete, onClose }: {
       color: form.color,
       recurrence: form.recurrence,
       emoji: form.emoji,
+      zona: form.zona || undefined,
     })
   }
 
@@ -140,14 +147,24 @@ function EventModal({ initial, onSave, onDelete, onClose }: {
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 resize-none bg-gray-50" />
           </div>
 
-          {/* Location */}
-          <div>
-            <label className="text-xs font-medium text-gray-500 block mb-1">Ubicación</label>
-            <div className="relative">
-              <span className="absolute left-3 top-2.5 text-gray-400 text-xs">📍</span>
-              <input value={form.location} onChange={e => set('location', e.target.value)}
-                placeholder="Lugar o enlace de reunión"
-                className="w-full border border-gray-200 rounded-xl pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 bg-gray-50" />
+          {/* Location + Zona */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="text-xs font-medium text-gray-500 block mb-1">Ubicación</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-gray-400 text-xs">📍</span>
+                <input value={form.location} onChange={e => set('location', e.target.value)}
+                  placeholder="Dirección exacta"
+                  className="w-full border border-gray-200 rounded-xl pl-7 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 bg-gray-50" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-gray-500 block mb-1">Zona / Distrito</label>
+              <select value={form.zona} onChange={e => set('zona', e.target.value)}
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 bg-white">
+                <option value="">Sin zona</option>
+                {ZONAS_LIMA.map(z => <option key={z} value={z}>{z}</option>)}
+              </select>
             </div>
           </div>
 

@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import {
   Bot, Send, Settings2, Plus, Trash2, History,
-  ChevronLeft, Leaf, ShoppingBag, Wrench, Loader2,
+  ChevronLeft, Wrench, Loader2, Briefcase, Truck, Shield, Calculator,
   User, Copy, Check, AlertCircle, X, MessageSquare,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -126,7 +126,8 @@ function TypingDots({ color }: { color: string }) {
 // ── Mode icon ─────────────────────────────────────────────────────────────────
 
 const MODE_ICONS: Record<string, React.ElementType> = {
-  general: Bot, sales: ShoppingBag, technical: Wrench, agronomo: Leaf,
+  general: Bot, asesor: Briefcase, distribuidor: Truck, technical: Wrench,
+  administrador: Shield, cotizador: Calculator,
 }
 
 // ── Main page ─────────────────────────────────────────────────────────────────
@@ -451,10 +452,12 @@ export default function BotChatPage() {
 
 function getStarters(mode: string): string[] {
   const starters: Record<string, string[]> = {
-    general:  ['¿Cuál es tu función principal?', '¿Qué información tienes disponible?', 'Ayúdame con una consulta', 'Dame un resumen del tema'],
-    sales:    ['¿Qué productos recomiendas?', 'Necesito una cotización', 'Comparar productos similares', '¿Cuál tiene mejor relación precio/calidad?'],
-    technical:['¿Cómo funciona este producto?', 'Especificaciones técnicas', 'Guía de instalación', 'Resolución de problemas'],
-    agronomo: ['¿Qué fertilizante usar en maíz?', 'Control de plagas en tomate', 'Programa de riego recomendado', 'Compatibilidad de agroquímicos'],
+    general:      ['¿Cuál es tu función principal?', '¿Qué información tienes disponible?', 'Ayúdame con una consulta', 'Dame un resumen del tema'],
+    asesor:       ['¿Qué estilo recomiendas para mi sala?', 'Necesito ideas de decoración', 'Combinar colores y texturas', '¿Qué tendencias hay este año?'],
+    distribuidor: ['¿Qué telas tienen disponibles?', 'Necesito una cotización de materiales', 'Comparar proveedores', 'Tiempos de entrega estimados'],
+    technical:    ['¿Cómo se instala este producto?', 'Especificaciones técnicas', 'Guía de instalación', 'Resolución de problemas'],
+    administrador:['Resumen de proyectos activos', 'Estado de cotizaciones pendientes', 'Reporte de inventario', 'Tareas por vencer'],
+    cotizador:    ['Genera una cotización de cortinas', 'Calcula metraje de tela', 'Aplica el IGV a un presupuesto', 'Compara costos de instalación'],
   }
   return starters[mode] ?? starters.general
 }

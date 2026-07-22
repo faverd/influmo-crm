@@ -11,10 +11,9 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/api/webhook') ||
     pathname.startsWith('/api/auth') ||
     pathname === '/api/branding' ||
-    pathname === '/manifest.json' ||
+    pathname === '/manifest.webmanifest' ||
     pathname === '/sw.js' ||
     pathname.startsWith('/icon-') ||
-    pathname === '/beragro-logo.png' ||
     pathname === '/apple-icon.png'
   ) {
     return res

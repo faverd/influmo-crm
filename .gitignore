@@ -29,6 +29,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# baileys session credentials (sensitive) + its own deps
+/auth_info_baileys/
+/baileys-server/node_modules/
+
 # Claude Code
 .claude/
 

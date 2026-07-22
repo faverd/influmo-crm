@@ -1,6 +1,7 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Plus, Receipt, CheckCircle, XCircle, Clock, Search } from 'lucide-react'
+import { alertDialog } from '@/lib/dialogs'
 
 type Factura = {
   id: string; numero: string; cliente_nombre: string; cliente_ruc: string
@@ -41,7 +42,7 @@ export default function FacturasPage() {
   const total = subtotal + igv
 
   async function save() {
-    if (!form.cliente_nombre.trim()) return alert('Ingresa el nombre del cliente')
+    if (!form.cliente_nombre.trim()) return alertDialog('Ingresa el nombre del cliente')
     setSaving(true)
     const r = await fetch('/api/facturas', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
     if (r.ok) { setModal(false); load() }
@@ -64,18 +65,18 @@ export default function FacturasPage() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Facturas</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Control de facturación y cobros</p>
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Facturas</h1>
+          <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Control de facturación y cobros</p>
         </div>
-        <button onClick={() => setModal(true)} className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
-          <Plus size={16} /> Nueva Factura
+        <button onClick={() => setModal(true)} className="flex items-center gap-2 bg-brand text-white px-2.5 sm:px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
+          <Plus size={16} /> <span className="hidden sm:inline">Nueva Factura</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
         {[
           { label: 'Total', value: stats.total },
           { label: 'Pagadas', value: stats.pagadas },

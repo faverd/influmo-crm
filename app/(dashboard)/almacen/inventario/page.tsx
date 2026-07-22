@@ -1,6 +1,7 @@
-'use client'
+﻿'use client'
 import { useState, useEffect } from 'react'
 import { Plus, Search, Package, AlertTriangle, Edit2, Trash2 } from 'lucide-react'
+import { alertDialog } from '@/lib/dialogs'
 
 type Item = {
   id: string; codigo: string; nombre: string; descripcion: string
@@ -39,7 +40,7 @@ export default function InventarioPage() {
   }
 
   async function save() {
-    if (!form.nombre.trim()) return alert('Ingresa el nombre del producto')
+    if (!form.nombre.trim()) return alertDialog('Ingresa el nombre del producto')
     setSaving(true)
     const r = await fetch('/api/inventario', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -58,18 +59,18 @@ export default function InventarioPage() {
   const valorTotal = list.reduce((s, i) => s + i.stock_actual * i.precio_costo, 0)
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-3 sm:p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Materiales y productos de decoración</p>
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Inventario</h1>
+          <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Materiales y productos de decoración</p>
         </div>
-        <button onClick={() => setModal(true)} className="flex items-center gap-2 bg-brand text-white px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
-          <Plus size={16} /> Nuevo Producto
+        <button onClick={() => setModal(true)} className="flex items-center gap-2 bg-brand text-white px-2.5 sm:px-4 py-2 rounded-xl text-sm font-medium hover:opacity-90">
+          <Plus size={16} /> <span className="hidden sm:inline">Nuevo Producto</span>
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
         {[
           { label: 'Productos', value: list.length },
           { label: 'Stock bajo', value: sinStock, alert: sinStock > 0 },
