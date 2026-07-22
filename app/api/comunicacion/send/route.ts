@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getCommSettingsRaw } from '@/lib/comm-settings'
-import nodemailer from 'nodemailer'
+import { buildTransporter } from '@/lib/mailer'
+
+export const runtime = 'nodejs'
+export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -28,17 +31,18 @@ export async function POST(req: NextRequest) {
       ? `<div>${(body || '').replace(/\n/g, '<br/>')}</div><br/>${saved.signature_html}`
       : (body || '').replace(/\n/g, '<br/>')
 
+  let info: { accepted?: (string | { address: string })[]; rejected?: (string | { address: string })[]; response?: string }
   try {
-    const transporter = nodemailer.createTransport({
-      host: saved.smtp_host,
-      port: Number(saved.smtp_port || 587),
-      secure: saved.smtp_ssl === 'true',
-      auth: { user: saved.smtp_user, pass: saved.smtp_pass },
-    })
-    await transporter.sendMail({
+    const transporter = buildTransporter(saved)
+    info = await transporter.sendMail({
       from: saved.email_from ? `"${saved.email_from}" <${saved.smtp_user}>` : saved.smtp_user,
+      replyTo: saved.smtp_user,
       to, subject, html,
     })
+    // If the server accepted no recipients, treat as a failure rather than a silent "sent".
+    if (info.accepted && info.accepted.length === 0) {
+      return NextResponse.json({ error: `El servidor no aceptó el destinatario. Respuesta: ${info.response || 'sin detalle'}` }, { status: 502 })
+    }
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'No se pudo enviar el correo' }, { status: 500 })
   }
@@ -57,5 +61,5 @@ export async function POST(req: NextRequest) {
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true, mensaje: data })
+  return NextResponse.json({ ok: true, mensaje: data, smtp: info.response ?? null })
 }

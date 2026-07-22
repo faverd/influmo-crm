@@ -10,7 +10,6 @@ import {
 import { cn } from '@/lib/utils'
 import { alertDialog } from '@/lib/dialogs'
 
-const CORREO_CUENTA = 'marketing@decorinteriores.pe'
 
 type Msg = {
   id: string; canal: string; direccion: string
@@ -42,6 +41,7 @@ export default function BandejaPage() {
   const [mensajes, setMensajes] = useState<Msg[]>([])
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing]   = useState(false)
+  const [cuenta, setCuenta]     = useState('')
   const [folder, setFolder]     = useState('bandeja')
   const [selected, setSelected] = useState<Msg | null>(null)
   const [search, setSearch]     = useState('')
@@ -69,6 +69,7 @@ export default function BandejaPage() {
 
   useEffect(() => {
     load().then(() => sincronizar(true))
+    fetch('/api/comunicacion/settings').then(r => r.json()).then(s => setCuenta(s?.smtp_user || s?.imap_user || '')).catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [load])
 
@@ -258,7 +259,7 @@ export default function BandejaPage() {
               )}
             </h2>
             <div className="flex items-center gap-1.5">
-              <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full hidden sm:inline">{CORREO_CUENTA}</span>
+              {cuenta && <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full hidden sm:inline">{cuenta}</span>}
             </div>
           </div>
           <div className="relative mb-2">

@@ -72,6 +72,9 @@ export default function ComunicacionConfigPage() {
   const [testingImap, setTestingImap] = useState(false)
   const [testingWa, setTestingWa] = useState(false)
   const [smtpResult, setSmtpResult] = useState<{ ok: boolean; error?: string } | null>(null)
+  const [testSendTo, setTestSendTo] = useState('')
+  const [sendingTest, setSendingTest] = useState(false)
+  const [testSendResult, setTestSendResult] = useState<{ ok: boolean; error?: string; accepted?: string[]; rejected?: string[]; response?: string; to?: string } | null>(null)
   const [imapResult, setImapResult] = useState<{ ok: boolean; error?: string } | null>(null)
   const [waResult, setWaResult] = useState<{ ok: boolean; error?: string; phone?: string } | null>(null)
   const [waStatus, setWaStatus] = useState<{ connected: boolean; webhook_verify_token_set: boolean } | null>(null)
@@ -130,6 +133,16 @@ export default function ComunicacionConfigPage() {
       const d = await r.json().catch(() => ({}))
       await alertDialog(d.error || 'No se pudo guardar la configuración')
     }
+  }
+
+  async function sendTest() {
+    setSendingTest(true); setTestSendResult(null)
+    const r = await fetch('/api/comunicacion/test-send', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: testSendTo.trim() }),
+    })
+    const d = await r.json().catch(() => ({ ok: false, error: 'Respuesta inválida' }))
+    setTestSendResult(d); setSendingTest(false)
   }
 
   async function testSmtp() {
@@ -212,8 +225,8 @@ export default function ComunicacionConfigPage() {
               <StatusBadge ok={smtpConfigured} />
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <Field label="Correo remitente (nombre)" value={form.email_from} onChange={e => set('email_from', e.target.value)} placeholder="Decoraciones Interiores" />
-              <Field label="Usuario / correo SMTP" value={form.smtp_user} onChange={e => set('smtp_user', e.target.value)} placeholder="marketing@decorinteriores.pe" />
+              <Field label="Correo remitente (nombre)" value={form.email_from} onChange={e => set('email_from', e.target.value)} placeholder="Tu Empresa" />
+              <Field label="Usuario / correo SMTP" value={form.smtp_user} onChange={e => set('smtp_user', e.target.value)} placeholder="tucorreo@tudominio.com" />
               <Field label="Servidor SMTP" value={form.smtp_host} onChange={e => set('smtp_host', e.target.value)} placeholder="smtp.gmail.com" />
               <Field label="Puerto" value={form.smtp_port} onChange={e => set('smtp_port', e.target.value)} placeholder="587" />
               <Field label="Contraseña / App Password" type="password" value={form.smtp_pass} onChange={e => set('smtp_pass', e.target.value)}
@@ -234,6 +247,33 @@ export default function ComunicacionConfigPage() {
                 </span>
               )}
             </div>
+
+            {/* Prueba de envío real */}
+            <div className="border-t border-gray-100 pt-3 space-y-2">
+              <label className="text-xs font-semibold text-gray-600 block">Enviar correo de prueba</label>
+              <div className="flex items-center gap-2 flex-wrap">
+                <input value={testSendTo} onChange={e => setTestSendTo(e.target.value)} placeholder={form.smtp_user || 'destinatario@correo.com'}
+                  className="flex-1 min-w-[180px] border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand/20" />
+                <button onClick={sendTest} disabled={sendingTest}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium bg-brand text-white hover:opacity-90 transition disabled:opacity-50">
+                  {sendingTest ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />} Enviar prueba
+                </button>
+              </div>
+              <p className="text-[11px] text-gray-400">Debe estar guardada la configuración. Si no llega, revisa spam. La respuesta del servidor aparece abajo.</p>
+              {testSendResult && (
+                testSendResult.ok ? (
+                  <div className="text-xs bg-green-50 text-green-700 rounded-lg px-3 py-2">
+                    ✅ El servidor <b>aceptó</b> el correo para {testSendResult.to}. Revisa la bandeja (y spam) del destinatario.
+                    {testSendResult.response && <span className="block text-green-600/80 mt-0.5 font-mono text-[10px] break-all">Respuesta: {testSendResult.response}</span>}
+                  </div>
+                ) : (
+                  <div className="text-xs bg-red-50 text-red-600 rounded-lg px-3 py-2 break-words">
+                    ❌ {testSendResult.error || 'El servidor rechazó el envío.'}
+                    {testSendResult.rejected && testSendResult.rejected.length > 0 && <span className="block mt-0.5">Rechazados: {testSendResult.rejected.join(', ')}</span>}
+                  </div>
+                )
+              )}
+            </div>
           </div>
 
           <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-5 space-y-4">
@@ -244,7 +284,7 @@ export default function ComunicacionConfigPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Field label="Servidor IMAP" value={form.imap_host} onChange={e => set('imap_host', e.target.value)} placeholder="imap.gmail.com" />
               <Field label="Puerto IMAP" value={form.imap_port} onChange={e => set('imap_port', e.target.value)} placeholder="993" />
-              <Field label="Usuario IMAP" value={form.imap_user} onChange={e => set('imap_user', e.target.value)} placeholder="marketing@decorinteriores.pe" />
+              <Field label="Usuario IMAP" value={form.imap_user} onChange={e => set('imap_user', e.target.value)} placeholder="tucorreo@tudominio.com" />
               <Field label="Contraseña IMAP" type="password" value={form.imap_pass} onChange={e => set('imap_pass', e.target.value)}
                 placeholder={secretsSet.imap_pass ? '•••••••• (sin cambios)' : 'Contraseña IMAP'} />
             </div>
