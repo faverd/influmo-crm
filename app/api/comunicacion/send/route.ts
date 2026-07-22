@@ -11,8 +11,9 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { to, subject, body, html: rawHtml, appendSignature = true } = await req.json().catch(() => ({}))
+  const { to, subject, body, html: rawHtml, appendSignature = true, attachments } = await req.json().catch(() => ({}))
   if (!to || !subject) return NextResponse.json({ error: 'Falta destinatario o asunto' }, { status: 400 })
+  const atts: { name: string; url: string; type?: string }[] = Array.isArray(attachments) ? attachments.filter(a => a?.url) : []
 
   const saved = await getCommSettingsRaw()
 
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
       from: saved.email_from ? `"${saved.email_from}" <${saved.smtp_user}>` : saved.smtp_user,
       replyTo: saved.smtp_user,
       to, subject, html,
+      attachments: atts.map(a => ({ filename: a.name, path: a.url })),
     })
     // If the server accepted no recipients, treat as a failure rather than a silent "sent".
     if (info.accepted && info.accepted.length === 0) {
@@ -53,8 +55,11 @@ export async function POST(req: NextRequest) {
     de_nombre: saved.email_from || saved.smtp_user,
     de_email: saved.smtp_user,
     para: to,
+    to_nombre: to,
     asunto: subject,
-    cuerpo: body || (rawHtml ? String(rawHtml).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 4000) : ''),
+    cuerpo: String(html).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 400),
+    cuerpo_html: html,
+    attachments: atts,
     leido: true,
     estrella: false,
     folder: 'enviados',
