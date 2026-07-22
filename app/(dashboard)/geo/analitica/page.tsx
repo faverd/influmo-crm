@@ -1,120 +1,120 @@
-﻿'use client'
+'use client'
 
-import { useEffect, useState } from 'react'
-import { PieChart, TrendingUp, MapPin, Store } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import dynamic from 'next/dynamic'
+import { BarChart3, Users, FileText, TrendingUp, Download, FileDown, Activity } from 'lucide-react'
+import { RANGOS, type GeoStats, type GeoZona } from '@/lib/geo'
+import { downloadAsExcel } from '@/lib/excel-export'
 
-interface Contacto { id: string; ciudad?: string; distrito?: string }
-interface Cotizacion { id: string; cliente_direccion?: string; total: number; estado: string }
+const MapView = dynamic(() => import('@/components/geo/map-view'), { ssr: false, loading: () => <div className="h-[300px] rounded-xl bg-gray-100 animate-pulse" /> })
 
-const BAR_COLORS = ['#0d9488', '#3b82f6', '#a855f7', '#f97316', '#ef4444', '#ec4899', '#14b8a6', '#6366f1']
+const HEADERS = ['Departamento', 'Contactos', 'Clientes', 'Cotizaciones', 'Ventas', 'Monto (S/)', '% Part.']
+const toRow = (z: GeoZona) => [z.departamento, z.contactos, z.clientes, z.cotizaciones, z.ventas, z.monto, `${z.pct}%`]
 
-export default function AnaliticaGeograficaPage() {
-  const [contactos, setContactos] = useState<Contacto[]>([])
-  const [cotizaciones, setCotizaciones] = useState<Cotizacion[]>([])
-  const [ubicaciones, setUbicaciones] = useState<{ ciudad: string | null }[]>([])
-  const [loading, setLoading] = useState(true)
+export default function GeoAnaliticaPage() {
+  const [data, setData] = useState<GeoStats | null>(null)
+  const [rango, setRango] = useState('todo')
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/contactos').then(r => r.json()).catch(() => []),
-      fetch('/api/cotizaciones').then(r => r.json()).catch(() => []),
-      fetch('/api/geo/ubicaciones').then(r => r.json()).catch(() => []),
-    ]).then(([c, q, u]) => {
-      setContactos(Array.isArray(c) ? c : c.data ?? [])
-      setCotizaciones(Array.isArray(q) ? q : [])
-      setUbicaciones(Array.isArray(u) ? u : [])
-      setLoading(false)
-    })
-  }, [])
+    fetch(`/api/geo/stats?rango=${rango}`).then(r => r.json()).then(setData).catch(() => setData({ totals: { contactos: 0, clientes: 0, cotizaciones: 0, ventas: 0, monto: 0 }, zonas: [], points: [] }))
+  }, [rango])
 
-  const porZona = contactos.reduce((acc: Record<string, number>, c) => {
-    const z = c.ciudad || c.distrito || 'Sin zona'
-    acc[z] = (acc[z] || 0) + 1
-    return acc
-  }, {})
-  const zonasSorted = Object.entries(porZona).sort((a, b) => b[1] - a[1]).slice(0, 8)
-  const maxZona = Math.max(1, ...zonasSorted.map(([, v]) => v))
-  const total = contactos.length
+  const t = data?.totals
+  const zonas = useMemo(() => data?.zonas ?? [], [data])
+  const ticket = t && t.ventas ? t.monto / t.ventas : 0
+  const conv = t && t.cotizaciones ? (t.ventas / t.cotizaciones) * 100 : 0
 
-  const aprobadas = cotizaciones.filter(c => c.estado === 'aprobada')
-  const montoTotal = aprobadas.reduce((s, c) => s + (c.total || 0), 0)
+  const funnel = [
+    { l: 'Consultas / Contactos', v: t?.contactos ?? 0, c: '#3b82f6' },
+    { l: 'Cotizaciones', v: t?.cotizaciones ?? 0, c: '#d97706' },
+    { l: 'Ventas cerradas', v: t?.ventas ?? 0, c: '#16a34a' },
+  ]
+  const fMax = Math.max(1, ...funnel.map(f => f.v))
 
-  const porCiudadUbic = ubicaciones.reduce((acc: Record<string, number>, u) => {
-    const c = u.ciudad || 'Sin ciudad'
-    acc[c] = (acc[c] || 0) + 1
-    return acc
-  }, {})
+  function exportExcel() { downloadAsExcel('analitica-geografica', HEADERS, zonas.map(toRow)) }
+  async function exportPdf() {
+    const { jsPDF } = await import('jspdf')
+    const doc = new jsPDF()
+    doc.setFontSize(16); doc.text('Analítica Geográfica', 14, 18)
+    doc.setFontSize(9); doc.setTextColor(120)
+    doc.text(`Contactos: ${t?.contactos ?? 0}  ·  Clientes: ${t?.clientes ?? 0}  ·  Cotizaciones: ${t?.cotizaciones ?? 0}  ·  Ventas: ${t?.ventas ?? 0}  ·  Monto: S/ ${(t?.monto ?? 0).toLocaleString('es-PE')}`, 14, 26)
+    let y = 40
+    doc.setTextColor(30); doc.setFontSize(9)
+    HEADERS.forEach((h, i) => doc.text(String(h), 14 + i * 27, y))
+    y += 4; doc.setDrawColor(200); doc.line(14, y, 196, y); y += 6
+    doc.setTextColor(60)
+    for (const z of zonas) {
+      toRow(z).forEach((c, i) => doc.text(String(c), 14 + i * 27, y))
+      y += 7; if (y > 280) { doc.addPage(); y = 20 }
+    }
+    doc.save('analitica-geografica.pdf')
+  }
 
   return (
-    <div className="p-3 sm:p-6 max-w-5xl mx-auto">
-      <div className="flex items-center gap-3 mb-6">
-        <PieChart size={22} className="text-brand" />
+    <div className="p-3 sm:p-6 max-w-7xl mx-auto">
+      <div className="mb-4 flex items-center justify-between flex-wrap gap-2">
         <div>
-          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 truncate">Analítica Geográfica</h1>
-          <p className="text-sm text-gray-500 mt-0.5 hidden sm:block">Concentración de clientes, ventas y presencia comercial por zona</p>
+          <h1 className="text-lg sm:text-2xl font-bold text-gray-900 flex items-center gap-2"><BarChart3 size={22} className="text-brand" /> Analítica Geográfica</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5 hidden sm:block">Embudo y rendimiento comercial por ubicación</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <select value={rango} onChange={e => setRango(e.target.value)} className="border border-gray-200 rounded-xl px-3 py-2 text-sm bg-white">{RANGOS.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}</select>
+          <button onClick={exportExcel} className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50"><Download size={15} /><span className="hidden sm:inline">Excel</span></button>
+          <button onClick={exportPdf} className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50"><FileDown size={15} /><span className="hidden sm:inline">PDF</span></button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-4 mb-4 sm:mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
         {[
-          { label: 'Clientes totales',    value: total,                              icon: MapPin, color: 'bg-blue-50 text-blue-600' },
-          { label: 'Zonas activas',       value: Object.keys(porZona).length,        icon: PieChart, color: 'bg-purple-50 text-purple-600' },
-          { label: 'Cotizaciones aprob.', value: aprobadas.length,                   icon: TrendingUp, color: 'bg-green-50 text-green-600' },
-          { label: 'Puntos comerciales',  value: ubicaciones.length,                 icon: Store, color: 'bg-teal-50 text-teal-600' },
-        ].map(c => (
-          <div key={c.label} className="bg-white rounded-2xl border border-gray-100 p-4">
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center mb-3 ${c.color}`}><c.icon size={16} /></div>
-            <p className="text-2xl font-bold text-gray-900">{loading ? '—' : c.value}</p>
-            <p className="text-xs text-gray-400">{c.label}</p>
-          </div>
+          { l: 'Clientes', v: t?.clientes ?? 0, i: Users, c: '#16a34a' },
+          { l: 'Cotizaciones', v: t?.cotizaciones ?? 0, i: FileText, c: '#d97706' },
+          { l: 'Ticket promedio', v: `S/ ${ticket.toLocaleString('es-PE', { maximumFractionDigits: 0 })}`, i: TrendingUp, c: '#7c3aed' },
+          { l: 'Conversión', v: `${conv.toFixed(1)}%`, i: Activity, c: '#0d9488' },
+        ].map(k => (
+          <div key={k.l} className="bg-white rounded-xl border border-gray-100 p-3"><div className="w-8 h-8 rounded-lg flex items-center justify-center mb-1" style={{ background: k.c + '18', color: k.c }}><k.i size={15} /></div><p className="text-lg font-bold text-gray-900">{k.v}</p><p className="text-[11px] text-gray-400">{k.l}</p></div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Bar chart por zona */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <p className="font-semibold text-gray-900 mb-4">Clientes por zona</p>
-          {zonasSorted.length === 0 ? (
-            <p className="text-xs text-gray-400 text-center py-10">Sin datos suficientes</p>
-          ) : (
-            <div className="space-y-3">
-              {zonasSorted.map(([zona, count], i) => (
-                <div key={zona}>
-                  <div className="flex justify-between text-xs mb-1">
-                    <span className="font-medium text-gray-700">{zona}</span>
-                    <span className="text-gray-400">{count} ({total > 0 ? Math.round(count / total * 100) : 0}%)</span>
-                  </div>
-                  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all" style={{ width: `${(count / maxZona) * 100}%`, backgroundColor: BAR_COLORS[i % BAR_COLORS.length] }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <div className="bg-white rounded-xl border border-gray-100 p-4">
+          <h3 className="font-semibold text-gray-900 text-sm mb-3">Embudo de conversión</h3>
+          <div className="space-y-3">
+            {funnel.map(f => (
+              <div key={f.l}>
+                <div className="flex justify-between text-xs mb-1"><span className="text-gray-600">{f.l}</span><span className="font-semibold">{f.v}</span></div>
+                <div className="h-6 rounded-lg bg-gray-100 overflow-hidden"><div className="h-full rounded-lg flex items-center justify-end px-2 text-[10px] text-white font-medium transition-all" style={{ width: `${Math.max(8, (f.v / fMax) * 100)}%`, background: f.c }}>{((f.v / fMax) * 100).toFixed(0)}%</div></div>
+              </div>
+            ))}
+          </div>
         </div>
-
-        {/* Presencia comercial */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5">
-          <p className="font-semibold text-gray-900 mb-4">Presencia comercial por ciudad</p>
-          {Object.keys(porCiudadUbic).length === 0 ? (
-            <p className="text-xs text-gray-400 text-center py-10">Aún no hay ubicaciones comerciales registradas</p>
-          ) : (
-            <div className="space-y-2">
-              {Object.entries(porCiudadUbic).sort((a, b) => b[1] - a[1]).map(([ciudad, count]) => (
-                <div key={ciudad} className="flex items-center justify-between px-3 py-2 bg-gray-50 rounded-lg">
-                  <span className="text-sm text-gray-700 flex items-center gap-1.5"><Store size={12} className="text-brand" /> {ciudad}</span>
-                  <span className="text-xs font-bold text-brand bg-brand/10 px-2 py-0.5 rounded-full">{count}</span>
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="bg-white rounded-xl border border-gray-100 p-4">
+          <h3 className="font-semibold text-gray-900 text-sm mb-3">Distribución geográfica</h3>
+          <MapView zonas={zonas} mode="heatmap" height={300} />
         </div>
+      </div>
 
-        {/* Monto aprobado */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 lg:col-span-2">
-          <p className="font-semibold text-gray-900 mb-1">Monto de cotizaciones aprobadas</p>
-          <p className="text-xs text-gray-400 mb-3">Total facturable confirmado a nivel general</p>
-          <p className="text-3xl font-bold text-green-600">S/ {montoTotal.toFixed(2)}</p>
+      <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <h3 className="font-semibold text-gray-900 text-sm mb-3">Rendimiento por departamento</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead><tr className="text-left text-xs text-gray-400 border-b border-gray-100">
+              {HEADERS.map(h => <th key={h} className="py-2 pr-3 whitespace-nowrap">{h}</th>)}
+            </tr></thead>
+            <tbody>
+              {zonas.length === 0 ? <tr><td colSpan={7} className="py-8 text-center text-gray-400 text-sm">Sin datos geográficos</td></tr>
+                : zonas.map(z => (
+                  <tr key={z.departamento} className="border-b border-gray-50 last:border-0">
+                    <td className="py-2.5 pr-3 font-medium text-gray-800">{z.departamento}</td>
+                    <td className="py-2.5 pr-3 text-gray-600">{z.contactos}</td>
+                    <td className="py-2.5 pr-3 text-gray-600">{z.clientes}</td>
+                    <td className="py-2.5 pr-3 text-gray-600">{z.cotizaciones}</td>
+                    <td className="py-2.5 pr-3 text-gray-600">{z.ventas}</td>
+                    <td className="py-2.5 pr-3 font-medium text-brand whitespace-nowrap">S/ {z.monto.toLocaleString('es-PE')}</td>
+                    <td className="py-2.5 pr-3"><span className="text-xs text-gray-500">{z.pct}%</span></td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
