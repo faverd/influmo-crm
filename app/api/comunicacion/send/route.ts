@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { to, subject, body, appendSignature = true } = await req.json().catch(() => ({}))
+  const { to, subject, body, html: rawHtml, appendSignature = true } = await req.json().catch(() => ({}))
   if (!to || !subject) return NextResponse.json({ error: 'Falta destinatario o asunto' }, { status: 400 })
 
   const saved = await getCommSettingsRaw()
@@ -20,9 +20,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Falta configurar el servidor SMTP en Comunicación → Configuración.' }, { status: 400 })
   }
 
-  const html = appendSignature && saved.signature_html
-    ? `<div>${(body || '').replace(/\n/g, '<br/>')}</div><br/>${saved.signature_html}`
-    : (body || '').replace(/\n/g, '<br/>')
+  // If pre-rendered HTML is supplied (e.g. a template document), send it as-is;
+  // otherwise build HTML from the plain-text body and optionally append the signature.
+  const html = rawHtml
+    ? rawHtml
+    : appendSignature && saved.signature_html
+      ? `<div>${(body || '').replace(/\n/g, '<br/>')}</div><br/>${saved.signature_html}`
+      : (body || '').replace(/\n/g, '<br/>')
 
   try {
     const transporter = nodemailer.createTransport({
@@ -46,7 +50,7 @@ export async function POST(req: NextRequest) {
     de_email: saved.smtp_user,
     para: to,
     asunto: subject,
-    cuerpo: body || '',
+    cuerpo: body || (rawHtml ? String(rawHtml).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 4000) : ''),
     leido: true,
     estrella: false,
     folder: 'enviados',
