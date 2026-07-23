@@ -81,6 +81,12 @@ html, body {
   display: none;
 }
 
+/* Leaflet: undo Tailwind preflight's `img { max-width:100%; height:auto }`,
+   which shrinks/misaligns map tiles and can leave the map blank. */
+.leaflet-container img { max-width: none !important; }
+.leaflet-container .leaflet-tile { width: 256px; height: 256px; }
+.leaflet-pane img { max-width: none !important; }
+
 /* Bell ring animation for new-notification pulse */
 @keyframes bell-ring {
   0%, 100% { transform: rotate(0deg); }

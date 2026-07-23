@@ -31,6 +31,21 @@ function ClickPicker({ onPick }: { onPick: (lat: number, lon: number) => void })
   return null
 }
 
+// Leaflet computes tile coverage from the container size at init; inside a flex/
+// grid the final width often arrives a frame later, leaving blank tiles until an
+// invalidateSize(). This forces a resize after mount and on window resize.
+function AutoSize() {
+  const map = useMap()
+  useEffect(() => {
+    const fix = () => map.invalidateSize()
+    const t1 = setTimeout(fix, 100)
+    const t2 = setTimeout(fix, 400)
+    window.addEventListener('resize', fix)
+    return () => { clearTimeout(t1); clearTimeout(t2); window.removeEventListener('resize', fix) }
+  }, [map])
+  return null
+}
+
 export default function MapView({
   points = [], zonas = [], mode = 'marcadores', height = 420,
   center = [-9.19, -75.02], zoom = 5, radioKm, radioCentro, onPick,
@@ -44,7 +59,7 @@ export default function MapView({
   return (
     <div style={{ height }} className="w-full rounded-xl overflow-hidden border border-gray-100 z-0">
       <MapContainer center={center} zoom={zoom} style={{ height: '100%', width: '100%' }} scrollWheelZoom>
-        <TileLayer attribution='&copy; OpenStreetMap' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <TileLayer attribution='&copy; OpenStreetMap' url="https://tile.openstreetmap.org/{z}/{x}/{y}.png" />
 
         {(mode === 'heatmap' || mode === 'cluster') && zonas.map(z => {
           if (z.lat == null || z.lon == null) return null
@@ -90,6 +105,7 @@ export default function MapView({
           </>
         ) : null}
 
+        <AutoSize />
         {mode === 'marcadores' && <FitOnData points={points} />}
         {onPick && <ClickPicker onPick={onPick} />}
       </MapContainer>

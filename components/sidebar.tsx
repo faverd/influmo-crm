@@ -22,10 +22,12 @@ type NavGroup = { label: string; icon: React.ElementType; items: NavItem[] }
 type NavEntry = NavItem | NavGroup
 
 function isGroup(e: NavEntry): e is NavGroup { return 'items' in e }
-function isActivePath(pathname: string, search: string, href: string) {
+
+// Only the single best (longest) matching base should ever be active, so a
+// parent route like /geo doesn't stay highlighted alongside /geo/ubicaciones.
+function isActivePath(pathname: string, search: string, href: string, best: string) {
   const [base, query] = href.split('?')
-  const baseMatch = pathname === base || pathname.startsWith(base + '/')
-  if (!baseMatch) return false
+  if (base !== best) return false
   if (!query) return true
   const hrefParams = new URLSearchParams(query)
   const curParams = new URLSearchParams(search)
@@ -120,10 +122,24 @@ const BOTTOM_NAV: NavItem[] = [
   { href: '/admin',    icon: Shield,   label: 'Administración' },
 ]
 
+// All nav bases (path without query), used to pick the single best (longest) match.
+const ALL_BASES = [
+  ...NAV.flatMap(e => isGroup(e) ? e.items.map(i => i.href.split('?')[0]) : [e.href.split('?')[0]]),
+  ...BOTTOM_NAV.map(i => i.href.split('?')[0]),
+]
+function bestBase(pathname: string): string {
+  let best = ''
+  for (const b of ALL_BASES) {
+    if ((pathname === b || pathname.startsWith(b + '/')) && b.length > best.length) best = b
+  }
+  return best
+}
+
 function SidebarInner() {
   const pathname = usePathname()
   const router = useRouter()
   const search = useSearchParams().toString()
+  const best = bestBase(pathname)
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [email, setEmail] = useState('')
@@ -143,9 +159,10 @@ function SidebarInner() {
       if (b.brand_app_tagline) setAppTagline(b.brand_app_tagline)
     })
     // open group that contains active route
+    const b = bestBase(pathname)
     const active = new Set<string>()
     for (const entry of NAV) {
-      if (isGroup(entry) && entry.items.some(i => isActivePath(pathname, search, i.href))) {
+      if (isGroup(entry) && entry.items.some(i => isActivePath(pathname, search, i.href, b))) {
         active.add(entry.label)
       }
     }
@@ -219,10 +236,10 @@ function SidebarInner() {
         </button>
 
       {/* Logo */}
-      <div className={cn('flex items-center gap-2.5 px-4 py-5 border-b border-gray-100', collapsed && 'justify-center px-2')}>
+      <div className={cn('flex items-center gap-2.5 px-3 pt-3 pb-2.5 border-b border-gray-100', collapsed && 'justify-center px-2')}>
         {navLogo ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={navLogo} alt="Logo" className={cn('object-contain shrink-0', collapsed ? 'w-8 h-8' : 'h-9 max-w-[150px]')} />
+          <img src={navLogo} alt="Logo" className={cn('object-contain object-left shrink-0', collapsed ? 'w-8 h-8' : 'h-11 max-w-[170px]')} />
         ) : (
           <>
             <div className="w-8 h-8 bg-brand rounded-xl flex items-center justify-center shrink-0 shadow-sm">
@@ -244,7 +261,7 @@ function SidebarInner() {
           if (!isGroup(entry)) {
             const active = entry.href === '/dashboard'
               ? pathname === '/dashboard'
-              : isActivePath(pathname, search, entry.href)
+              : isActivePath(pathname, search, entry.href, best)
             return (
               <Link key={entry.href} href={entry.href} title={collapsed ? entry.label : undefined}
                 className={linkClass(active)}>
@@ -256,12 +273,12 @@ function SidebarInner() {
 
           // Group
           const isOpen = openGroups.has(entry.label)
-          const groupActive = entry.items.some(i => isActivePath(pathname, search, i.href))
+          const groupActive = entry.items.some(i => isActivePath(pathname, search, i.href, best))
 
           if (collapsed) {
             // In collapsed mode, show group icon as first sub-link
             return entry.items.map(item => {
-              const active = isActivePath(pathname, search, item.href)
+              const active = isActivePath(pathname, search, item.href, best)
               return (
                 <Link key={item.href} href={item.href} title={item.label}
                   className={linkClass(active)}>
@@ -287,7 +304,7 @@ function SidebarInner() {
               {isOpen && (
                 <div className="ml-4 flex flex-col gap-0.5 mt-0.5">
                   {entry.items.map(item => {
-                    const active = isActivePath(pathname, search, item.href)
+                    const active = isActivePath(pathname, search, item.href, best)
                     return (
                       <Link key={item.href} href={item.href}
                         className={cn(
@@ -309,7 +326,7 @@ function SidebarInner() {
       {/* Bottom nav + user */}
       <div className="flex flex-col gap-0.5 p-2 border-t border-gray-100">
         {BOTTOM_NAV.map(({ href, icon: Icon, label }) => {
-          const active = isActivePath(pathname, search, href)
+          const active = isActivePath(pathname, search, href, best)
           return (
             <Link key={href} href={href} title={collapsed ? label : undefined}
               className={linkClass(active)}>
