@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
-  Search, Plus, Download, Filter, RefreshCw, Mail, Phone, X, Loader2,
-  FileText, Star, Trash2, Paperclip, Check, ChevronDown, Calendar, MessageSquare,
+  Search, Plus, Download, RefreshCw, Mail, Phone, X, Loader2,
+  FileText, Star, Trash2, Paperclip, Check, ChevronDown, MessageSquare, Eye, Pencil, Share2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { alertDialog, confirmDialog } from '@/lib/dialogs'
 
 interface Attachment { url: string; name: string; type: string }
 interface Contact {
@@ -48,6 +49,7 @@ export default function ContactosPage() {
   const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editing, setEditing] = useState<Contact | null>(null)
+  const [viewing, setViewing] = useState<Contact | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const load = useCallback((status: string, q: string) => {
@@ -71,6 +73,14 @@ export default function ContactosPage() {
     setContacts(cs => cs.map(c => c.id === id ? { ...c, [field]: value } : c))
     await fetch('/api/contactos', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, [field]: value }) })
     load(tab, search)
+  }
+
+  async function remove(c: Contact) {
+    if (!await confirmDialog(`¿Eliminar el contacto ${c.name}?`, { danger: true, confirmLabel: 'Eliminar' })) return
+    setContacts(cs => cs.filter(x => x.id !== c.id))
+    const r = await fetch('/api/contactos', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id }) })
+    if (!r.ok) { await alertDialog('No se pudo eliminar el contacto'); load(tab, search) }
+    else load(tab, search)
   }
 
   function exportCSV() {
@@ -139,6 +149,7 @@ export default function ContactosPage() {
                   <th className="px-4 py-3">Última interacción</th>
                   <th className="px-4 py-3">Asignado a</th>
                   <th className="px-4 py-3">Estado</th>
+                  <th className="px-4 py-3 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -181,6 +192,14 @@ export default function ContactosPage() {
                           <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                         </div>
                       </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center justify-end gap-0.5 whitespace-nowrap">
+                          <button onClick={() => setViewing(c)} title="Ver" className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-blue-500 transition"><Eye size={15} /></button>
+                          {c.phone && <a href={`https://wa.me/${c.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener" title="Compartir por WhatsApp" className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-green-600 transition"><Share2 size={15} /></a>}
+                          <button onClick={() => { setEditing(c); setShowModal(true) }} title="Editar" className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-amber-500 transition"><Pencil size={15} /></button>
+                          <button onClick={() => remove(c)} title="Eliminar" className="p-1.5 rounded-lg text-gray-400 hover:bg-red-50 hover:text-red-500 transition"><Trash2 size={15} /></button>
+                        </div>
+                      </td>
                     </tr>
                   )
                 })}
@@ -195,6 +214,48 @@ export default function ContactosPage() {
           onClose={() => { setShowModal(false); setEditing(null) }}
           onSaved={() => { setShowModal(false); setEditing(null); load(tab, search) }} />
       )}
+      {viewing && (
+        <ContactView contact={viewing} onClose={() => setViewing(null)}
+          onEdit={() => { setEditing(viewing); setViewing(null); setShowModal(true) }} />
+      )}
+    </div>
+  )
+}
+
+function ContactView({ contact: c, onClose, onEdit }: { contact: Contact; onClose: () => void; onEdit: () => void }) {
+  const st = STATUS_META[c.status] ?? STATUS_META.nuevo
+  const rows: [string, React.ReactNode][] = [
+    ['Nombre', c.name], ['Email', c.email || '—'], ['Teléfono', c.phone || '—'],
+    ['Estado', st.label], ['Asignado a', c.assigned_to || '—'], ['Horario', c.contact_hours || '—'],
+    ['Calificación', '⭐'.repeat(c.rating || 0) || '—'], ['Nota', c.note || '—'],
+    ['Primer contacto', fmtDate(c.first_contact)], ['Última interacción', fmtDate(c.last_interaction)],
+    ['Adjuntos', String(c.attachments?.length ?? 0)],
+  ]
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[88vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 sticky top-0 bg-white">
+          <h2 className="font-bold text-gray-900">{c.name}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700"><X size={18} /></button>
+        </div>
+        <div className="p-3">
+          <table className="w-full text-sm border border-gray-100 rounded-lg overflow-hidden">
+            <tbody>
+              {rows.map(([k, v], i) => (
+                <tr key={k} className={i % 2 ? 'bg-gray-50/60' : 'bg-white'}>
+                  <td className="px-3 py-2 text-gray-500 font-medium border-r border-gray-100 w-1/3 align-top">{k}</td>
+                  <td className="px-3 py-2 text-gray-800 break-words whitespace-pre-wrap">{v}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-gray-100">
+          {c.phone && <a href={`https://wa.me/${c.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener" className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50"><Share2 size={14} /> WhatsApp</a>}
+          {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50"><Mail size={14} /> Correo</a>}
+          <button onClick={onEdit} className="flex items-center gap-1.5 px-3 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:opacity-90"><Pencil size={14} /> Editar</button>
+        </div>
+      </div>
     </div>
   )
 }
