@@ -10,7 +10,7 @@ import {
   HardHat, CheckSquare, Inbox, MessagesSquare, StickyNote, LayoutGrid,
   CalendarDays, MapPinned, ClipboardList, MessageCircle, BarChart3,
   Users, Settings2, LayoutPanelTop, ArrowLeftRight, Warehouse,
-  MapPin, PieChart, Store,
+  MapPin, PieChart, Store, Building2,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
@@ -43,6 +43,8 @@ const NAV: NavEntry[] = [
   {
     label: 'Finanzas', icon: DollarSign,
     items: [
+      { href: '/finanzas/empresas',     icon: Building2,    label: 'Empresas' },
+      { href: '/finanzas/clientes',     icon: Users,        label: 'Clientes' },
       { href: '/finanzas/cotizaciones', icon: FileText,     label: 'Cotizaciones' },
       { href: '/finanzas/facturas',     icon: Receipt,      label: 'Facturas' },
       { href: '/finanzas/gastos',       icon: TrendingDown, label: 'Gastos' },
