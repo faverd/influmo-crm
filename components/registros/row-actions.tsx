@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Eye, Share2, Mail, Printer, Pencil, Trash2, X } from 'lucide-react'
+import { composeEmail } from '@/lib/mail-compose'
 
 export interface RecordView {
   title: string
@@ -45,7 +46,7 @@ export function RowActions<T extends { id: string }>({ record, describe, onEdit,
   const v = describe(record)
   const text = asText(v)
   const share = () => { const ph = (v.phone || '').replace(/\D/g, ''); window.open(ph ? `https://wa.me/51${ph.replace(/^51/, '')}?text=${encodeURIComponent(text)}` : `https://wa.me/?text=${encodeURIComponent(text)}`, '_blank') }
-  const mail = () => { window.location.href = `mailto:${v.email ?? ''}?subject=${encodeURIComponent(v.title)}&body=${encodeURIComponent(text)}` }
+  const mail = () => composeEmail({ to: v.email ?? '', subject: v.title, body: text })
 
   return (
     <>

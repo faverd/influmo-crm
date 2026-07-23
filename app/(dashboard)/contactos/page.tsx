@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { alertDialog, confirmDialog } from '@/lib/dialogs'
+import { composeEmail } from '@/lib/mail-compose'
 
 interface Attachment { url: string; name: string; type: string }
 interface Contact {
@@ -166,7 +167,7 @@ export default function ContactosPage() {
                         </button>
                       </td>
                       <td className="px-4 py-3 text-sm">
-                        {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-gray-600 hover:text-brand"><Mail size={12} className="text-gray-400" />{c.email}</a>}
+                        {c.email && <button onClick={() => composeEmail({ to: c.email, subject: `Contacto — ${c.name}` })} title="Enviar correo desde el CRM" className="flex items-center gap-1.5 text-gray-600 hover:text-brand"><Mail size={12} className="text-gray-400" />{c.email}</button>}
                         {c.phone && <a href={`https://wa.me/${c.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener" className="flex items-center gap-1.5 text-green-600 hover:underline mt-0.5"><Phone size={12} />{c.phone}</a>}
                       </td>
                       <td className="px-4 py-3">
@@ -252,7 +253,7 @@ function ContactView({ contact: c, onClose, onEdit }: { contact: Contact; onClos
         </div>
         <div className="flex justify-end gap-2 px-5 py-3 border-t border-gray-100">
           {c.phone && <a href={`https://wa.me/${c.phone.replace(/\D/g, '')}`} target="_blank" rel="noopener" className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50"><Share2 size={14} /> WhatsApp</a>}
-          {c.email && <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50"><Mail size={14} /> Correo</a>}
+          {c.email && <button onClick={() => composeEmail({ to: c.email, subject: `Contacto — ${c.name}` })} className="flex items-center gap-1.5 px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50"><Mail size={14} /> Correo</button>}
           <button onClick={onEdit} className="flex items-center gap-1.5 px-3 py-2 bg-brand text-white rounded-lg text-sm font-medium hover:opacity-90"><Pencil size={14} /> Editar</button>
         </div>
       </div>

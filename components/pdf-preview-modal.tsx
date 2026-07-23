@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import { FileText, ZoomIn, ZoomOut, Share2, Mail, Printer, Download, ExternalLink, X, Loader2 } from 'lucide-react'
 import type { jsPDF } from 'jspdf'
 import { alertDialog } from '@/lib/dialogs'
+import { composeEmail } from '@/lib/mail-compose'
 
 interface PdfPreviewModalProps {
   title: string
@@ -66,11 +67,15 @@ export default function PdfPreviewModal({ title, filename, buildDoc, emailTo, em
     }
   }
 
+  // Envía por la cuenta configurada del CRM, con el PDF adjunto automáticamente.
   function handleCorreo() {
-    handleDescargar()
-    const subject = encodeURIComponent(emailSubject || title)
-    const body = encodeURIComponent('Adjunto encontrarás el documento. (El PDF se descargó automáticamente — adjúntalo a este correo antes de enviarlo.)')
-    window.location.href = `mailto:${emailTo || ''}?subject=${subject}&body=${body}`
+    const blob = getBlob(); if (!blob) return
+    composeEmail({
+      to: emailTo || '',
+      subject: emailSubject || title,
+      body: 'Estimado(a):\n\nAdjunto encontrará el documento solicitado.\n\nSaludos cordiales.',
+      attachBlob: { blob, filename: filename.endsWith('.pdf') ? filename : `${filename}.pdf` },
+    })
   }
 
   return (

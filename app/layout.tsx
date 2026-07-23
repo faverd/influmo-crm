@@ -3,6 +3,7 @@ import './globals.css'
 import PWARegister from '@/components/pwa-register'
 import BrandingProvider from '@/components/branding-provider'
 import DialogHost from '@/components/dialog-host'
+import MailComposeHost from '@/components/mail-compose-host'
 import { createServiceClient } from '@/lib/supabase/server'
 import { hexToRgbTriplet, darkenHex, tintHex } from '@/lib/color'
 
@@ -78,6 +79,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <BrandingProvider />
         <PWARegister />
         <DialogHost />
+        <MailComposeHost />
       </body>
     </html>
   )

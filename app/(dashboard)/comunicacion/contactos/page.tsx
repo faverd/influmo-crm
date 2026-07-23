@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Search, Plus, Phone, Mail, Trash2, X, Loader2, Users } from 'lucide-react'
 import { alertDialog, confirmDialog } from '@/lib/dialogs'
+import { composeEmail } from '@/lib/mail-compose'
 
 type Contacto = { id: string; nombre: string | null; email: string; empresa: string | null; telefono: string | null; origen: string }
 
@@ -76,7 +77,7 @@ export default function ComunicacionContactosPage() {
               <p className="text-xs text-gray-400 truncate">{c.empresa || (c.origen === 'correo' ? 'Desde correo' : 'Contacto')}</p>
             </div>
             <div className="hidden md:flex items-center gap-4 text-xs text-gray-500">
-              <a href={`mailto:${c.email}`} className="flex items-center gap-1 hover:text-brand"><Mail size={11} />{c.email}</a>
+              <button onClick={() => composeEmail({ to: c.email, subject: c.nombre || '' })} title="Enviar correo desde el CRM" className="flex items-center gap-1 hover:text-brand"><Mail size={11} />{c.email}</button>
               {c.telefono && <span className="flex items-center gap-1"><Phone size={11} />{c.telefono}</span>}
             </div>
             <button onClick={() => remove(c)} title="Eliminar" className="p-2 rounded-lg text-gray-300 hover:bg-red-50 hover:text-red-500 transition"><Trash2 size={14} /></button>

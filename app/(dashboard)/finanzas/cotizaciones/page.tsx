@@ -8,6 +8,7 @@ import { generateCotizacionPDF, type CotizacionPdfData, type CompanyBranding } f
 import { downloadAsExcel } from '@/lib/excel-export'
 import PdfPreviewModal from '@/components/pdf-preview-modal'
 import { alertDialog, confirmDialog } from '@/lib/dialogs'
+import { composeEmail } from '@/lib/mail-compose'
 
 type Item = { descripcion: string; cantidad: number; precio_unitario: number; unidad: string }
 type Cotizacion = {
@@ -190,11 +191,15 @@ export default function CotizacionesPage() {
     }
   }
 
-  function directEmail(c: Cotizacion) {
-    directDownload(c)
-    const subject = encodeURIComponent(`Cotización ${c.numero}`)
-    const body = encodeURIComponent('Adjunto encontrarás la cotización. (El PDF se descargó — adjúntalo antes de enviar.)')
-    window.location.href = `mailto:${c.cliente_email ?? ''}?subject=${subject}&body=${body}`
+  // Envía la cotización por la cuenta configurada del CRM, con el PDF adjunto.
+  async function directEmail(c: Cotizacion) {
+    const doc = await generateCotizacionPDF(toCotPdfData(c), company)
+    composeEmail({
+      to: c.cliente_email ?? '',
+      subject: `Cotización ${c.numero}`,
+      body: `Estimado(a) ${c.cliente_nombre || ''}:\n\nAdjunto encontrará la cotización ${c.numero}.\n\nSaludos cordiales.`,
+      attachBlob: { blob: doc.output('blob'), filename: `${c.numero}.pdf` },
+    })
   }
 
   return (
