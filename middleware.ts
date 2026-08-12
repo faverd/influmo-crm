@@ -34,7 +34,22 @@ export async function middleware(req: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // Guard the auth check with a timeout. If Supabase is slow/paused, do NOT
+  // let the request hang until the platform kills the middleware with a
+  // MIDDLEWARE_INVOCATION_TIMEOUT (504) — fail fast to /login instead so the
+  // site degrades gracefully during a DB blip instead of going fully down.
+  const TIMEOUT = Symbol('timeout')
+  let user: unknown = null
+  try {
+    const result = await Promise.race([
+      supabase.auth.getUser().then(r => r.data.user).catch(() => null),
+      new Promise(resolve => setTimeout(() => resolve(TIMEOUT), 4000)),
+    ])
+    if (result === TIMEOUT) return NextResponse.redirect(new URL('/login', req.url))
+    user = result
+  } catch {
+    return NextResponse.redirect(new URL('/login', req.url))
+  }
 
   if (!user) {
     return NextResponse.redirect(new URL('/login', req.url))
