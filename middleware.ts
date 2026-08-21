@@ -10,6 +10,7 @@ export async function middleware(req: NextRequest) {
     pathname.startsWith('/login') ||
     pathname.startsWith('/api/webhook') ||
     pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/cron') ||
     pathname === '/api/branding' ||
     pathname === '/manifest.webmanifest' ||
     pathname === '/sw.js' ||
@@ -43,7 +44,7 @@ export async function middleware(req: NextRequest) {
   try {
     const result = await Promise.race([
       supabase.auth.getUser().then(r => r.data.user).catch(() => null),
-      new Promise(resolve => setTimeout(() => resolve(TIMEOUT), 4000)),
+      new Promise(resolve => setTimeout(() => resolve(TIMEOUT), 8000)),
     ])
     if (result === TIMEOUT) return NextResponse.redirect(new URL('/login', req.url))
     user = result
