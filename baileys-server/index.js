@@ -119,6 +119,12 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', connected: isConnected, number: myNumber })
 })
 
+// JSON del QR para mostrarlo dentro del CRM (imagen data-URL lista para <img src>)
+app.get('/qr.json', (req, res) => {
+  res.set('Access-Control-Allow-Origin', '*')
+  res.json({ connected: isConnected, qr: isConnected ? null : qrDataURL, number: myNumber })
+})
+
 app.get('/qr', (req, res) => {
   if (isConnected) {
     return res.send(`

@@ -100,6 +100,61 @@ function SetupScreen({ verifyTokenSet }: { verifyTokenSet: boolean }) {
   )
 }
 
+// ─── WhatsApp Web (QR) link screen ───────────────────────────────────────────
+function QRScreen({ onLinked }: { onLinked: () => void }) {
+  const [qr, setQr] = useState<string | null>(null)
+  const [err, setErr] = useState('')
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let alive = true
+    const tick = async () => {
+      try {
+        const r = await fetch('/api/whatsapp/qr')
+        const d = await r.json()
+        if (!alive) return
+        setLoading(false)
+        if (d.connected) { onLinked(); return }
+        setQr(d.qr || null)
+        setErr(d.error || '')
+      } catch { if (alive) { setLoading(false); setErr('No se pudo contactar el servidor.') } }
+    }
+    tick()
+    const id = setInterval(tick, 4000)
+    return () => { alive = false; clearInterval(id) }
+  }, [onLinked])
+
+  return (
+    <div className="flex-1 flex flex-col items-center justify-center bg-[#f7f8fa] p-8">
+      <div className="max-w-md w-full text-center">
+        <div className="w-16 h-16 bg-[#25D366] rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg">
+          <MessageSquareText size={32} className="text-white" />
+        </div>
+        <h1 className="text-2xl font-light text-gray-700 mb-2">Vincula WhatsApp Web</h1>
+        <p className="text-sm text-gray-500 mb-6">Abre WhatsApp en tu teléfono → <strong>Dispositivos vinculados</strong> → <strong>Vincular un dispositivo</strong> y escanea este código.</p>
+
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 inline-block shadow-sm">
+          {loading ? (
+            <div className="w-[260px] h-[260px] flex items-center justify-center"><Loader2 size={28} className="animate-spin text-gray-300" /></div>
+          ) : qr ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={qr} alt="QR de WhatsApp" className="w-[260px] h-[260px]" />
+          ) : (
+            <div className="w-[260px] h-[260px] flex flex-col items-center justify-center text-center px-4">
+              <Loader2 size={24} className="animate-spin text-gray-300 mb-3" />
+              <p className="text-xs text-gray-400">{err || 'Generando código QR… (el servidor puede tardar en arrancar)'}</p>
+            </div>
+          )}
+        </div>
+
+        <p className="text-[11px] text-gray-400 mt-4 flex items-center justify-center gap-1.5">
+          <RefreshCw size={11} /> El código se actualiza solo. Se conecta automáticamente al escanear.
+        </p>
+      </div>
+    </div>
+  )
+}
+
 // ─── Lead badge ──────────────────────────────────────────────────────────────
 function LeadBadge({ score }: { score: 'hot'|'warm'|'cold'|null }) {
   if (!score) return null
@@ -145,7 +200,7 @@ function ChatItem({ conv, active, onClick }: { conv: Conversation; active: boole
 
 // ─── Main WhatsApp Page ──────────────────────────────────────────────────────
 export default function WhatsAppPage() {
-  const [status, setStatus] = useState<{ connected: boolean; verify_token_set: boolean } | null>(null)
+  const [status, setStatus] = useState<{ connected: boolean; verify_token_set: boolean; baileys_configured: boolean; baileys_connected: boolean; number: string } | null>(null)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -163,8 +218,8 @@ export default function WhatsAppPage() {
 
   const loadStatus = useCallback(() => {
     fetch('/api/whatsapp/status').then(r => r.json()).then(d => {
-      setStatus({ connected: d.connected, verify_token_set: d.webhook_verify_token_set })
-    }).catch(() => setStatus({ connected: false, verify_token_set: false }))
+      setStatus({ connected: d.connected, verify_token_set: d.webhook_verify_token_set, baileys_configured: !!d.baileys_configured, baileys_connected: !!d.baileys_connected, number: d.number || '' })
+    }).catch(() => setStatus({ connected: false, verify_token_set: false, baileys_configured: false, baileys_connected: false, number: '' }))
   }, [])
 
   const loadConversations = useCallback(() => {
@@ -223,6 +278,10 @@ export default function WhatsAppPage() {
     return !q || (c.name || '').toLowerCase().includes(q) || c.phone.includes(q)
   })
 
+  // WhatsApp Web (Baileys) configurado pero aún no vinculado → mostrar QR para escanear
+  if (status && status.baileys_configured && !status.baileys_connected) {
+    return <div className="flex h-screen flex-col"><QRScreen onLinked={() => { loadStatus(); loadConversations() }} /></div>
+  }
   if (status && !status.connected) {
     return <div className="flex h-screen flex-col"><SetupScreen verifyTokenSet={status.verify_token_set} /></div>
   }
